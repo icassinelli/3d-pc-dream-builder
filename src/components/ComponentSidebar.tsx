@@ -51,7 +51,12 @@ const ComponentSidebar = ({
   const captureScene = async () => {
     setIsCapturing(true);
     try {
-      const canvas = await html2canvas(document.querySelector('#scene-container') as HTMLElement);
+      const sceneElement = document.querySelector('.w-full.h-full.relative');
+      if (!sceneElement) {
+        throw new Error('Scene element not found');
+      }
+      
+      const canvas = await html2canvas(sceneElement);
       const image = canvas.toDataURL('image/png');
       
       const cartData = {
@@ -68,6 +73,7 @@ const ComponentSidebar = ({
         description: `Your custom PC setup with ${selectedCount} components has been saved.`,
       });
     } catch (error) {
+      console.error('Capture error:', error);
       toast({
         title: "Error",
         description: "Failed to capture your setup. Please try again.",
