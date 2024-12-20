@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PCViewer from '@/components/PCViewer';
 import ComponentSidebar from '@/components/ComponentSidebar';
-import PCPartsAdmin from '@/components/PCPartsAdmin';
 
 const Index = () => {
   const [visibleParts, setVisibleParts] = useState<string[]>([]);
@@ -52,7 +51,6 @@ const Index = () => {
         selectedComponents={selectedComponents}
         setSelectedComponents={setSelectedComponents}
       />
-      <PCPartsAdmin availableMeshes={availableMeshes} />
     </div>
   );
 };
