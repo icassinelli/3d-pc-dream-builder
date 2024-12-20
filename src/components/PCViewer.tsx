@@ -175,10 +175,22 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
     };
   }, []); // Empty dependency array since we only want to set up once
 
-  // Update part visibility
+  // Update part visibility whenever visibleParts changes
   useEffect(() => {
+    if (!modelPartsRef.current) return;
+
+    // Log for debugging
+    console.log('Updating mesh visibility:', {
+      availableMeshes: Object.keys(modelPartsRef.current),
+      visibleParts
+    });
+
     Object.entries(modelPartsRef.current).forEach(([name, object]) => {
-      object.visible = visibleParts.includes(name);
+      const shouldBeVisible = visibleParts.includes(name);
+      if (object.visible !== shouldBeVisible) {
+        object.visible = shouldBeVisible;
+        console.log(`Setting visibility of ${name} to ${shouldBeVisible}`);
+      }
     });
   }, [visibleParts]);
 
