@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ArrowLeft, Plus, Eye, Settings, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowLeft, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import MeshSelector from '@/components/MeshSelector';
 import PCPartsAdmin from '@/components/PCPartsAdmin';
 
@@ -33,7 +33,6 @@ const Admin = () => {
     },
   ]);
   const [expandedPartId, setExpandedPartId] = useState<string | null>(null);
-  const [isPartsAdminOpen, setIsPartsAdminOpen] = useState(false);
 
   const toggleExpand = (partId: string) => {
     setExpandedPartId(expandedPartId === partId ? null : partId);
@@ -65,7 +64,7 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gaming-background text-gaming-text p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-4xl mx-auto space-y-8">
         <div className="flex justify-between items-center mb-2">
           <h1 className="text-3xl font-bold">Admin Dashboard</h1>
           <Button
@@ -78,12 +77,12 @@ const Admin = () => {
           </Button>
         </div>
         
-        <p className="text-gray-400 mb-8">
+        <p className="text-gray-400">
           Click on parts to expand • Select meshes in 3D view • Changes are saved automatically
         </p>
 
         <div 
-          className="border border-dashed border-gaming-accent/30 rounded-lg p-4 mb-8 hover:border-gaming-accent/50 transition-colors cursor-pointer"
+          className="border border-dashed border-gaming-accent/30 rounded-lg p-4 hover:border-gaming-accent/50 transition-colors cursor-pointer"
           onClick={addNewPart}
         >
           <div className="flex items-center justify-center text-gaming-accent gap-2">
@@ -171,20 +170,7 @@ const Admin = () => {
           ))}
         </div>
 
-        <div className="mt-8 flex justify-center">
-          <Button
-            variant="outline"
-            className="bg-transparent border-gaming-accent/30 text-gaming-accent hover:bg-gaming-accent/10"
-            onClick={() => setIsPartsAdminOpen(true)}
-          >
-            <Settings className="mr-2 h-4 w-4" />
-            Advanced Tools
-          </Button>
-        </div>
-
         <PCPartsAdmin
-          open={isPartsAdminOpen}
-          onOpenChange={setIsPartsAdminOpen}
           availableMeshes={[
             "Cube010", "Cube009", "Cube008", "Cube007", "Cube006",
             "MY_SCREEN", "Cube001_Material055_0", "gigabyte-logo001_gigabyte-logo_0"
