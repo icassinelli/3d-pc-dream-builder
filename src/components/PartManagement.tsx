@@ -30,33 +30,16 @@ const PartManagement = ({
   const [hideMeshes, setHideMeshes] = useState(false);
   const [pendingSelections, setPendingSelections] = useState<string[]>([...selectedMeshes]);
 
-  const getUnassignedMeshes = () => {
-    const allAssignedMeshes = new Set(
-      Object.values(assignedMeshes).flat()
-    );
-    return allMeshes.filter(mesh => !allAssignedMeshes.has(mesh));
-  };
-
-  // Get meshes that should be visible in this part's viewer
-  const getVisibleMeshes = () => {
-    // Show meshes that are:
-    // 1. Currently assigned to this part
-    // 2. Currently in pending selections
-    // 3. Not assigned to any other part
-    const visibleMeshes = new Set([
-      ...selectedMeshes,
-      ...pendingSelections,
-      ...getUnassignedMeshes()
-    ]);
-
-    // Filter out meshes that are assigned to other parts
+  // Get meshes that are available for this part (not assigned to other parts)
+  const getAvailableMeshes = () => {
+    const assignedToOtherParts = new Set<string>();
     Object.entries(assignedMeshes).forEach(([currentPartId, meshes]) => {
       if (currentPartId !== partId) {
-        meshes.forEach(mesh => visibleMeshes.delete(mesh));
+        meshes.forEach(mesh => assignedToOtherParts.add(mesh));
       }
     });
 
-    return Array.from(visibleMeshes);
+    return allMeshes.filter(mesh => !assignedToOtherParts.has(mesh));
   };
 
   const handleMeshSelect = (meshName: string) => {
@@ -123,12 +106,9 @@ const PartManagement = ({
           selectedMeshes={selectedMeshes}
           pendingSelections={pendingSelections}
           onMeshSelect={handleMeshSelect}
-          visibleMeshes={getVisibleMeshes()}
+          visibleMeshes={getAvailableMeshes()}
           hideMeshes={hideMeshes}
         />
-        <div className="absolute bottom-4 left-4 text-sm text-gaming-text/70">
-          Click meshes to select • Blue = assigned • Orange = pending • Gray = unassigned
-        </div>
       </div>
 
       <Button 

@@ -144,11 +144,48 @@ const MeshSelector = ({
   useEffect(() => {
     if (!sceneRef.current) return;
     
+    console.log('Updating mesh visibility in MeshSelector:', {
+      meshes: Object.keys(sceneRef.current.meshes),
+      visibleMeshes,
+      selectedMeshes,
+      pendingSelections
+    });
+    
     Object.entries(sceneRef.current.meshes).forEach(([name, mesh]) => {
-      const isVisible = visibleMeshes.includes(name);
-      mesh.visible = hideMeshes ? false : isVisible;
+      // A mesh should only be visible if it's in the visibleMeshes array
+      // and we're not hiding all meshes
+      const isVisible = visibleMeshes.includes(name) && !hideMeshes;
+      
+      // Update visibility
+      if (mesh.visible !== isVisible) {
+        console.log(`Setting visibility of ${name} to ${isVisible}`);
+        mesh.visible = isVisible;
+      }
+      
+      // Only update materials for visible meshes
       if (isVisible) {
-        updateMeshMaterials(mesh);
+        if (selectedMeshes.includes(name)) {
+          // Assigned to this part (blue)
+          mesh.material = new THREE.MeshPhongMaterial({ 
+            color: 0x0066ff,
+            opacity: 0.8,
+            transparent: true
+          });
+        } else if (pendingSelections.includes(name)) {
+          // Pending assignment (orange)
+          mesh.material = new THREE.MeshPhongMaterial({ 
+            color: 0xff6600,
+            opacity: 0.8,
+            transparent: true
+          });
+        } else {
+          // Unassigned (gray)
+          mesh.material = new THREE.MeshPhongMaterial({ 
+            color: 0x999999,
+            opacity: 0.6,
+            transparent: true
+          });
+        }
       }
     });
   }, [selectedMeshes, pendingSelections, visibleMeshes, hideMeshes]);
