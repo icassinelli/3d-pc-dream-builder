@@ -78,6 +78,13 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
     }));
   };
 
+  const handleSaveChanges = (partId: string) => {
+    toast({
+      title: "Changes Saved",
+      description: `Updated mesh assignments for ${config.partDetails[partId].name}`,
+    });
+  };
+
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
   };
@@ -112,6 +119,7 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
                   price={config.partDetails[part].price}
                   selectedMeshes={config.meshMap[part]}
                   onMeshSelect={handleMeshSelect}
+                  onSaveChanges={() => handleSaveChanges(part)}
                   allMeshes={availableMeshes}
                   assignedMeshes={config.meshMap}
                 />
