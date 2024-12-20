@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Camera, RotateCcw } from 'lucide-react';
 import PartDetailsForm from './PartDetailsForm';
 import ConfigurationPanel from './ConfigurationPanel';
 import JsonConfigPanel from './JsonConfigPanel';
@@ -62,6 +62,7 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   
   const [jsonConfig, setJsonConfig] = useState(JSON.stringify(config, null, 2));
   const [currentPart, setCurrentPart] = useState<string>("Monitor");
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const handleMeshSelect = (meshName: string) => {
     setSelectedMeshes(prev => {
@@ -83,75 +84,101 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
     });
   };
 
+  const toggleSection = (section: string) => {
+    setExpandedSection(expandedSection === section ? null : section);
+  };
+
   return (
     <div className="space-y-6 p-6 bg-gaming-background text-gaming-text">
-      <Accordion type="single" collapsible className="w-full space-y-4">
-        <AccordionItem value="configuration" className="border border-gaming-accent/20 rounded-lg overflow-hidden">
-          <AccordionTrigger className="px-4 py-2 hover:bg-gaming-accent/10">
-            Configuration Panel
-          </AccordionTrigger>
-          <AccordionContent className="p-4">
-            <ConfigurationPanel visibleParts={Object.values(config.meshMap).flat()} />
-          </AccordionContent>
-        </AccordionItem>
-
-        {Object.keys(config.meshMap).map((part) => (
-          <AccordionItem 
-            key={part} 
-            value={part}
-            className="border border-gaming-accent/20 rounded-lg overflow-hidden"
+      <div className="space-y-3">
+        {/* Configuration Panel Section */}
+        <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
+          <div 
+            className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
+            onClick={() => toggleSection('configuration')}
           >
-            <AccordionTrigger className="px-4 py-2 hover:bg-gaming-accent/10">
-              {config.partDetails[part].name} Configuration
-            </AccordionTrigger>
-            <AccordionContent className="p-4">
-              <PartDetailsForm
-                part={{
-                  id: part,
-                  code: part,
-                  name: config.partDetails[part].name,
-                  description: config.partDetails[part].description,
-                  price: config.partDetails[part].price,
-                  isConfigurable: config.partDetails[part].isConfigurable,
-                  meshNames: config.meshMap[part]
-                }}
-                onUpdate={(updatedPart) => {
-                  setConfig({
-                    ...config,
-                    partDetails: {
-                      ...config.partDetails,
-                      [part]: {
-                        name: updatedPart.name,
-                        description: updatedPart.description,
-                        price: updatedPart.price,
-                        isConfigurable: updatedPart.isConfigurable
+            <div className="flex justify-between items-center">
+              <span>Configuration Panel</span>
+            </div>
+          </div>
+          {expandedSection === 'configuration' && (
+            <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
+              <ConfigurationPanel visibleParts={Object.values(config.meshMap).flat()} />
+            </div>
+          )}
+        </div>
+
+        {/* Part Configuration Sections */}
+        {Object.keys(config.meshMap).map((part) => (
+          <div key={part} className="bg-[#1A1F2C] rounded-lg overflow-hidden">
+            <div 
+              className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
+              onClick={() => toggleSection(part)}
+            >
+              <div className="flex justify-between items-center">
+                <span>{config.partDetails[part].name}</span>
+                <span className="text-gaming-accent">${config.partDetails[part].price}</span>
+              </div>
+            </div>
+            {expandedSection === part && (
+              <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
+                <PartDetailsForm
+                  part={{
+                    id: part,
+                    code: part,
+                    name: config.partDetails[part].name,
+                    description: config.partDetails[part].description,
+                    price: config.partDetails[part].price,
+                    isConfigurable: config.partDetails[part].isConfigurable,
+                    meshNames: config.meshMap[part]
+                  }}
+                  onUpdate={(updatedPart) => {
+                    const newConfig = {
+                      ...config,
+                      partDetails: {
+                        ...config.partDetails,
+                        [part]: {
+                          name: updatedPart.name,
+                          description: updatedPart.description,
+                          price: updatedPart.price,
+                          isConfigurable: updatedPart.isConfigurable
+                        }
                       }
-                    }
-                  });
-                  setJsonConfig(JSON.stringify(config, null, 2));
-                }}
-                onMeshSelect={(partId, meshName) => {
-                  setCurrentPart(partId);
-                  handleMeshSelect(meshName);
-                }}
-              />
-            </AccordionContent>
-          </AccordionItem>
+                    };
+                    setConfig(newConfig);
+                    setJsonConfig(JSON.stringify(newConfig, null, 2));
+                  }}
+                  onMeshSelect={(partId, meshName) => {
+                    setCurrentPart(partId);
+                    handleMeshSelect(meshName);
+                  }}
+                />
+              </div>
+            )}
+          </div>
         ))}
 
-        <AccordionItem value="json" className="border border-gaming-accent/20 rounded-lg overflow-hidden">
-          <AccordionTrigger className="px-4 py-2 hover:bg-gaming-accent/10">
-            JSON Configuration
-          </AccordionTrigger>
-          <AccordionContent className="p-4">
-            <JsonConfigPanel 
-              jsonConfig={jsonConfig}
-              setJsonConfig={setJsonConfig}
-              setConfig={setConfig}
-            />
-          </AccordionContent>
-        </AccordionItem>
-      </Accordion>
+        {/* JSON Configuration Section */}
+        <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
+          <div 
+            className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
+            onClick={() => toggleSection('json')}
+          >
+            <div className="flex justify-between items-center">
+              <span>JSON Configuration</span>
+            </div>
+          </div>
+          {expandedSection === 'json' && (
+            <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
+              <JsonConfigPanel 
+                jsonConfig={jsonConfig}
+                setJsonConfig={setJsonConfig}
+                setConfig={setConfig}
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
