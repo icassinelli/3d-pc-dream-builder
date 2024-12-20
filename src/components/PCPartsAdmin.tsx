@@ -67,29 +67,15 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [showAdvancedTools, setShowAdvancedTools] = useState(false);
 
-  const handleMeshSelect = (partId: string, meshName: string) => {
-    setSelectedMeshes(prev => {
-      const newSelection = prev.includes(meshName) 
-        ? prev.filter(name => name !== meshName)
-        : [...prev, meshName];
-      return newSelection;
-    });
-  };
-
-  const handleSaveChanges = (partId: string) => {
-    const newConfig = {
-      ...config,
+  const handleMeshSelect = (partId: string, meshNames: string) => {
+    const meshArray = meshNames.split(',').filter(Boolean);
+    setConfig(prev => ({
+      ...prev,
       meshMap: {
-        ...config.meshMap,
-        [partId]: selectedMeshes
+        ...prev.meshMap,
+        [partId]: meshArray
       }
-    };
-    setConfig(newConfig);
-    setJsonConfig(JSON.stringify(newConfig, null, 2));
-    toast({
-      title: "Success",
-      description: "Mesh selections saved successfully",
-    });
+    }));
   };
 
   const toggleSection = (section: string) => {
@@ -99,7 +85,6 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   return (
     <div className="space-y-6 p-6 bg-gaming-background text-gaming-text">
       <div className="space-y-3">
-        {/* Part Configuration Sections */}
         {Object.keys(config.meshMap).map((part) => (
           <div key={part} className="bg-[#1A1F2C] rounded-lg overflow-hidden">
             <div 
@@ -128,13 +113,13 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
                   selectedMeshes={config.meshMap[part]}
                   onMeshSelect={handleMeshSelect}
                   onSaveChanges={() => handleSaveChanges(part)}
+                  allMeshes={availableMeshes}
+                  assignedMeshes={config.meshMap}
                 />
               </div>
             )}
           </div>
         ))}
-
-        {/* Advanced Tools Button */}
         <Button
           variant="outline"
           className="w-full mt-4 bg-[#1A1F2C] border-gaming-accent/30 text-gaming-accent hover:bg-[#1F242F] hover:border-gaming-accent/50"
@@ -143,11 +128,8 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
           <Settings2 className="w-4 h-4 mr-2" />
           Advanced Tools
         </Button>
-
-        {/* Advanced Tools Section */}
         {showAdvancedTools && (
           <div className="space-y-3 animate-part-in">
-            {/* Configuration Panel Section */}
             <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
               <div 
                 className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
@@ -163,8 +145,6 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
                 </div>
               )}
             </div>
-
-            {/* JSON Configuration Section */}
             <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
               <div 
                 className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"

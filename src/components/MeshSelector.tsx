@@ -7,7 +7,18 @@ import LoadingOverlay from './LoadingOverlay';
 import { MeshSelectorProps, SceneRefs } from '@/types/mesh';
 import { setupMeshMaterials, handleMeshSelection, initializeScene } from '@/utils/meshUtils';
 
-const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: MeshSelectorProps) => {
+interface ExtendedMeshSelectorProps extends MeshSelectorProps {
+  pendingSelections: string[];
+  visibleMeshes: string[];
+}
+
+const MeshSelector = ({ 
+  onMeshSelect, 
+  selectedMeshes, 
+  pendingSelections,
+  visibleMeshes,
+  hideMeshes = false 
+}: ExtendedMeshSelectorProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<SceneRefs>();
   const [isLoading, setIsLoading] = useState(true);
@@ -103,22 +114,50 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     };
   }, [onMeshSelect, selectedMeshes]);
 
+  // Update mesh materials based on selection state
+  const updateMeshMaterials = (mesh: THREE.Mesh) => {
+    if (selectedMeshes.includes(mesh.name)) {
+      // Assigned to this part (blue)
+      mesh.material = new THREE.MeshPhongMaterial({ 
+        color: 0x0066ff,
+        opacity: 0.8,
+        transparent: true
+      });
+    } else if (pendingSelections.includes(mesh.name)) {
+      // Pending assignment (orange)
+      mesh.material = new THREE.MeshPhongMaterial({ 
+        color: 0xff6600,
+        opacity: 0.8,
+        transparent: true
+      });
+    } else {
+      // Unassigned (gray)
+      mesh.material = new THREE.MeshPhongMaterial({ 
+        color: 0x999999,
+        opacity: 0.6,
+        transparent: true
+      });
+    }
+  };
+
   // Update mesh visibility and materials
   useEffect(() => {
     if (!sceneRef.current) return;
     
     Object.entries(sceneRef.current.meshes).forEach(([name, mesh]) => {
-      const isSelected = selectedMeshes.includes(name);
-      mesh.visible = hideMeshes ? !isSelected : true;
-      setupMeshMaterials(mesh, isSelected);
+      const isVisible = visibleMeshes.includes(name);
+      mesh.visible = hideMeshes ? false : isVisible;
+      if (isVisible) {
+        updateMeshMaterials(mesh);
+      }
     });
-  }, [selectedMeshes, hideMeshes]);
+  }, [selectedMeshes, pendingSelections, visibleMeshes, hideMeshes]);
 
   return (
     <div ref={mountRef} className="w-full h-[400px] relative rounded-lg overflow-hidden">
       <LoadingOverlay isLoading={isLoading} />
       <div className="absolute bottom-4 left-4 text-sm text-gaming-text/70">
-        Right-click to select/unselect parts • Left-click drag to rotate • Middle-click to zoom
+        Click to select/unselect parts • Left-click drag to rotate • Middle-click to zoom
       </div>
     </div>
   );

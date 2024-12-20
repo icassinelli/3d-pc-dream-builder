@@ -12,6 +12,8 @@ interface PartManagementProps {
   selectedMeshes: string[];
   onMeshSelect: (partId: string, meshName: string) => void;
   onSaveChanges: () => void;
+  allMeshes: string[];
+  assignedMeshes: Record<string, string[]>;
 }
 
 const PartManagement = ({
@@ -21,14 +23,61 @@ const PartManagement = ({
   price,
   selectedMeshes,
   onMeshSelect,
-  onSaveChanges
+  onSaveChanges,
+  allMeshes,
+  assignedMeshes
 }: PartManagementProps) => {
   const [hideMeshes, setHideMeshes] = useState(false);
+  const [pendingSelections, setPendingSelections] = useState<string[]>([...selectedMeshes]);
+
+  // Get unassigned meshes (meshes not assigned to any part)
+  const getUnassignedMeshes = () => {
+    const allAssignedMeshes = new Set(
+      Object.values(assignedMeshes).flat()
+    );
+    return allMeshes.filter(mesh => !allAssignedMeshes.has(mesh));
+  };
+
+  // Get meshes that should be visible in this part's viewer
+  const getVisibleMeshes = () => {
+    const unassignedMeshes = getUnassignedMeshes();
+    return [...selectedMeshes, ...unassignedMeshes];
+  };
+
+  const handleMeshSelect = (meshName: string) => {
+    setPendingSelections(prev => {
+      if (prev.includes(meshName)) {
+        return prev.filter(m => m !== meshName);
+      } else {
+        // Check if mesh is assigned to another part
+        for (const [partKey, meshes] of Object.entries(assignedMeshes)) {
+          if (partKey !== partId && meshes.includes(meshName)) {
+            toast({
+              title: "Warning",
+              description: `This mesh is already assigned to ${partKey}`,
+              variant: "destructive",
+            });
+            return prev;
+          }
+        }
+        return [...prev, meshName];
+      }
+    });
+  };
+
+  const handleSaveChanges = () => {
+    onMeshSelect(partId, pendingSelections.join(','));
+    onSaveChanges();
+    toast({
+      title: "Success",
+      description: "Mesh assignments saved successfully",
+    });
+  };
 
   const toggleMeshVisibility = () => {
     setHideMeshes(!hideMeshes);
     toast({
-      title: hideMeshes ? "Showing selected meshes" : "Hiding selected meshes",
+      title: hideMeshes ? "Showing all meshes" : "Hiding unassigned meshes",
       description: "Updated mesh visibility in the 3D viewer",
     });
   };
@@ -38,7 +87,9 @@ const PartManagement = ({
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm text-gray-400">{description}</p>
-          <p className="text-sm text-gray-500">{selectedMeshes.length} meshes</p>
+          <p className="text-sm text-gray-500">
+            {selectedMeshes.length} assigned, {pendingSelections.length - selectedMeshes.length} pending
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <Button
@@ -60,17 +111,20 @@ const PartManagement = ({
       <div className="relative">
         <MeshSelector
           selectedMeshes={selectedMeshes}
-          onMeshSelect={(meshName) => onMeshSelect(partId, meshName)}
+          pendingSelections={pendingSelections}
+          onMeshSelect={handleMeshSelect}
+          visibleMeshes={getVisibleMeshes()}
           hideMeshes={hideMeshes}
         />
         <div className="absolute bottom-4 left-4 text-sm text-gaming-text/70">
-          Click on parts to select • Orange = pending changes • Blue = saved
+          Click meshes to select • Blue = assigned • Orange = pending • Gray = unassigned
         </div>
       </div>
 
       <Button 
-        onClick={onSaveChanges}
+        onClick={handleSaveChanges}
         className="w-full bg-gaming-accent hover:bg-gaming-accent/80"
+        disabled={pendingSelections.length === selectedMeshes.length}
       >
         <Save className="w-4 h-4 mr-2" />
         Save Changes

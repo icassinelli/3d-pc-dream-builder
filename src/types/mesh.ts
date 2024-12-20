@@ -4,6 +4,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 export interface MeshSelectorProps {
   onMeshSelect: (meshName: string) => void;
   selectedMeshes: string[];
+  pendingSelections: string[];
+  visibleMeshes: string[];
   hideMeshes?: boolean;
 }
 
