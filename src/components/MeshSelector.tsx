@@ -1,9 +1,11 @@
-import { useEffect, useRef, useState, useMemo } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { toast } from '@/hooks/use-toast';
+import { setupMeshMaterials, handleMeshIntersection } from '@/utils/meshUtils';
+import LoadingOverlay from './LoadingOverlay';
 
 interface MeshSelectorProps {
   onMeshSelect: (meshName: string) => void;
@@ -19,14 +21,8 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
   const rendererRef = useRef<THREE.WebGLRenderer>();
   const meshesRef = useRef<{ [key: string]: THREE.Mesh }>({});
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
-  const mouseRef = useRef<THREE.Vector2>(new THREE.Vector2());
   const animationFrameId = useRef<number>();
   const [isLoading, setIsLoading] = useState(true);
-  const [isDragging, setIsDragging] = useState(false);
-  const dragStartPosition = useRef<{ x: number; y: number } | null>(null);
-
-  // Track all available meshes
-  const [availableMeshes, setAvailableMeshes] = useState<string[]>([]);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -58,12 +54,17 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Controls setup
+    // Controls setup - Enable left click for orbit
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
     controls.minDistance = 3;
     controls.maxDistance = 10;
+    controls.mouseButtons = {
+      LEFT: THREE.MOUSE.ROTATE,
+      MIDDLE: THREE.MOUSE.DOLLY,
+      RIGHT: THREE.MOUSE.NONE
+    };
     controlsRef.current = controls;
 
     // Lighting
@@ -89,18 +90,13 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
         const center = box.getCenter(new THREE.Vector3());
         gltf.scene.position.sub(center);
 
-        const meshNames: string[] = [];
         gltf.scene.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             meshesRef.current[child.name] = child;
-            meshNames.push(child.name);
-            child.material = new THREE.MeshPhongMaterial({
-              color: selectedMeshes.includes(child.name) ? 0x00A3FF : 0xCCCCCC,
-            });
+            setupMeshMaterials(child, selectedMeshes.includes(child.name));
           }
         });
 
-        setAvailableMeshes(meshNames);
         scene.add(gltf.scene);
         setIsLoading(false);
       },
@@ -115,56 +111,24 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
       }
     );
 
-    // Mouse event handlers
-    const handleMouseDown = (event: MouseEvent) => {
-      dragStartPosition.current = { x: event.clientX, y: event.clientY };
-      setIsDragging(false);
-    };
-
-    const handleMouseMove = (event: MouseEvent) => {
-      if (dragStartPosition.current) {
-        const deltaX = Math.abs(event.clientX - dragStartPosition.current.x);
-        const deltaY = Math.abs(event.clientY - dragStartPosition.current.y);
-        if (deltaX > 5 || deltaY > 5) {
-          setIsDragging(true);
-        }
+    // Right-click handler for mesh selection
+    const handleContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+      if (cameraRef.current && meshesRef.current) {
+        handleMeshIntersection(
+          event,
+          raycasterRef.current,
+          cameraRef.current,
+          meshesRef.current,
+          onMeshSelect
+        );
       }
     };
 
-    const handleMouseUp = (event: MouseEvent) => {
-      if (!isDragging && mountRef.current) {
-        const rect = mountRef.current.getBoundingClientRect();
-        mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        if (cameraRef.current && sceneRef.current) {
-          raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
-          const intersects = raycasterRef.current.intersectObjects(
-            Object.values(meshesRef.current),
-            false
-          );
-
-          if (intersects.length > 0) {
-            const mesh = intersects[0].object;
-            if (mesh instanceof THREE.Mesh) {
-              event.preventDefault();
-              onMeshSelect(mesh.name);
-            }
-          }
-        }
-      }
-      dragStartPosition.current = null;
-      setIsDragging(false);
-    };
-
-    mountRef.current.addEventListener('mousedown', handleMouseDown);
-    mountRef.current.addEventListener('mousemove', handleMouseMove);
-    mountRef.current.addEventListener('mouseup', handleMouseUp);
+    mountRef.current.addEventListener('contextmenu', handleContextMenu);
 
     // Animation loop
     const animate = () => {
-      if (!mountRef.current) return;
-      
       animationFrameId.current = requestAnimationFrame(animate);
       
       if (controlsRef.current) {
@@ -180,9 +144,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
 
     // Cleanup
     return () => {
-      mountRef.current?.removeEventListener('mousedown', handleMouseDown);
-      mountRef.current?.removeEventListener('mousemove', handleMouseMove);
-      mountRef.current?.removeEventListener('mouseup', handleMouseUp);
+      mountRef.current?.removeEventListener('contextmenu', handleContextMenu);
       
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
@@ -195,26 +157,23 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
         controlsRef.current.dispose();
       }
     };
-  }, [onMeshSelect, selectedMeshes, isDragging]);
+  }, [onMeshSelect, selectedMeshes]);
 
   // Update mesh visibility and colors
   useEffect(() => {
     Object.entries(meshesRef.current).forEach(([name, mesh]) => {
-      if (mesh.material instanceof THREE.MeshPhongMaterial) {
-        const isSelected = selectedMeshes.includes(name);
-        mesh.visible = hideMeshes ? !isSelected : true;
-        mesh.material.color.setHex(isSelected ? 0x00A3FF : 0xCCCCCC);
-      }
+      const isSelected = selectedMeshes.includes(name);
+      mesh.visible = hideMeshes ? !isSelected : true;
+      setupMeshMaterials(mesh, isSelected);
     });
   }, [selectedMeshes, hideMeshes]);
 
   return (
     <div ref={mountRef} className="w-full h-[400px] relative rounded-lg overflow-hidden">
-      {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gaming-background/50">
-          <div className="text-gaming-text">Loading 3D Model...</div>
-        </div>
-      )}
+      <LoadingOverlay isLoading={isLoading} />
+      <div className="absolute bottom-4 left-4 text-sm text-gaming-text/70">
+        Right-click to select parts • Left-click drag to rotate • Middle-click to zoom
+      </div>
     </div>
   );
 };
