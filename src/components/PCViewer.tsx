@@ -7,9 +7,10 @@ import { toast } from '@/hooks/use-toast';
 
 interface PCViewerProps {
   visibleParts: string[];
+  onMeshesLoaded?: (meshNames: string[]) => void;
 }
 
-const PCViewer = ({ visibleParts }: PCViewerProps) => {
+const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
@@ -87,11 +88,14 @@ const PCViewer = ({ visibleParts }: PCViewerProps) => {
         const center = box.getCenter(new THREE.Vector3());
         gltf.scene.position.sub(center);
         
+        const meshNames: string[] = [];
+        
         // Log all mesh names for debugging
         gltf.scene.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             console.log('Found mesh:', child.name);
             modelPartsRef.current[child.name] = child;
+            meshNames.push(child.name);
             child.castShadow = true;
             child.receiveShadow = true;
           }
@@ -99,6 +103,11 @@ const PCViewer = ({ visibleParts }: PCViewerProps) => {
         
         scene.add(gltf.scene);
         setIsLoading(false);
+        
+        // Notify parent component about available meshes
+        if (onMeshesLoaded) {
+          onMeshesLoaded(meshNames);
+        }
       },
       (progress) => {
         const percentComplete = (progress.loaded / progress.total) * 100;
@@ -160,7 +169,7 @@ const PCViewer = ({ visibleParts }: PCViewerProps) => {
       }
       dracoLoader.dispose();
     };
-  }, []);
+  }, [onMeshesLoaded]);
 
   // Update part visibility
   useEffect(() => {
