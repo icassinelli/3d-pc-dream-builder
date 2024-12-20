@@ -22,6 +22,11 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
   const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
   const animationFrameId = useRef<number>();
   const [isLoading, setIsLoading] = useState(true);
+  const [localSelectedMeshes, setLocalSelectedMeshes] = useState<string[]>(selectedMeshes);
+
+  useEffect(() => {
+    setLocalSelectedMeshes(selectedMeshes);
+  }, [selectedMeshes]);
 
   useEffect(() => {
     if (!mountRef.current) return;
@@ -62,9 +67,8 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.PAN  // Set to PAN but we'll prevent the context menu
+      RIGHT: THREE.MOUSE.PAN
     };
-    // Disable right-click context menu to prevent panning
     renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
     controlsRef.current = controls;
 
@@ -124,7 +128,19 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
       const intersects = raycasterRef.current.intersectObjects(Object.values(meshesRef.current), false);
       
       if (intersects.length > 0 && intersects[0].object instanceof THREE.Mesh) {
-        onMeshSelect(intersects[0].object.name);
+        const meshName = intersects[0].object.name;
+        const isSelected = localSelectedMeshes.includes(meshName);
+        
+        // Toggle selection
+        if (isSelected) {
+          setLocalSelectedMeshes(prev => prev.filter(name => name !== meshName));
+          setupMeshMaterials(intersects[0].object as THREE.Mesh, false);
+        } else {
+          setLocalSelectedMeshes(prev => [...prev, meshName]);
+          setupMeshMaterials(intersects[0].object as THREE.Mesh, true);
+        }
+        
+        onMeshSelect(meshName);
       }
     };
 
@@ -164,11 +180,11 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
   // Update mesh visibility and materials
   useEffect(() => {
     Object.entries(meshesRef.current).forEach(([name, mesh]) => {
-      const isSelected = selectedMeshes.includes(name);
+      const isSelected = localSelectedMeshes.includes(name);
       mesh.visible = hideMeshes ? !isSelected : true;
       setupMeshMaterials(mesh, isSelected);
     });
-  }, [selectedMeshes, hideMeshes]);
+  }, [localSelectedMeshes, hideMeshes]);
 
   const setupMeshMaterials = (mesh: THREE.Mesh, isSelected: boolean) => {
     const material = new THREE.MeshPhongMaterial({
@@ -181,7 +197,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     <div ref={mountRef} className="w-full h-[400px] relative rounded-lg overflow-hidden">
       <LoadingOverlay isLoading={isLoading} />
       <div className="absolute bottom-4 left-4 text-sm text-gaming-text/70">
-        Right-click to select parts • Left-click drag to rotate • Middle-click to zoom
+        Right-click to select/unselect parts • Left-click drag to rotate • Middle-click to zoom
       </div>
     </div>
   );
