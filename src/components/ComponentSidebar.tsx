@@ -56,16 +56,24 @@ const ComponentSidebar = ({
       // Wait a bit for any pending renders
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      const sceneElement = document.querySelector('.aspect-video.relative') as HTMLElement;
+      // Try multiple possible selectors for the scene element
+      const sceneElement = 
+        document.querySelector('.w-full.h-full.relative') || 
+        document.querySelector('.w-full.h-full') ||
+        document.querySelector('[ref="mountRef"]');
+
       if (!sceneElement) {
-        throw new Error('Scene element not found');
+        console.error('Available elements:', document.body.innerHTML);
+        throw new Error('Scene element not found. Please ensure the 3D viewer is properly mounted.');
       }
       
-      const canvas = await html2canvas(sceneElement, {
+      const canvas = await html2canvas(sceneElement as HTMLElement, {
         useCORS: true,
         backgroundColor: '#1a1a1a',
         scale: 2, // Increase quality
         logging: true, // Enable logging for debugging
+        allowTaint: true, // Allow cross-origin images
+        foreignObjectRendering: true // Enable rendering of foreign objects
       });
       
       const image = canvas.toDataURL('image/png');
