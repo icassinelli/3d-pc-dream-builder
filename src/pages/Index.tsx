@@ -20,7 +20,7 @@ const Index = () => {
     partDetails: {}
   });
 
-  // Load initial config
+  // Load initial config and handle storage events
   useEffect(() => {
     const loadConfig = () => {
       const savedConfig = localStorage.getItem('pcConfig');
@@ -29,14 +29,6 @@ const Index = () => {
           const parsedConfig = JSON.parse(savedConfig);
           console.log('Loading config:', parsedConfig);
           setConfig(parsedConfig);
-          
-          // Update visible parts based on selected components and new config
-          const newVisibleParts = Array.from(selectedComponents).reduce<string[]>((meshes, componentId) => {
-            const componentMeshes = parsedConfig.meshMap[componentId] || [];
-            return [...meshes, ...componentMeshes];
-          }, []);
-          
-          setVisibleParts(newVisibleParts);
         } catch (error) {
           console.error('Error parsing config:', error);
           toast({
@@ -51,7 +43,7 @@ const Index = () => {
     // Load initial config
     loadConfig();
 
-    // Listen for storage events (config updates from other tabs)
+    // Listen for storage events
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'pcConfig' && event.newValue !== null) {
         loadConfig();
@@ -63,25 +55,26 @@ const Index = () => {
     };
 
     window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []); // Remove selectedComponents from dependency array
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, [selectedComponents]);
-
-  // Update visible parts when selected components change
+  // Update visible parts when selected components or config changes
   useEffect(() => {
+    console.log('Updating visible parts. Selected components:', Array.from(selectedComponents));
+    console.log('Current config:', config);
+    
     const newVisibleParts = Array.from(selectedComponents).reduce<string[]>((meshes, componentId) => {
       const componentMeshes = config.meshMap[componentId] || [];
+      console.log(`Component ${componentId} meshes:`, componentMeshes);
       return [...meshes, ...componentMeshes];
     }, []);
     
-    console.log('Updating visible parts:', newVisibleParts);
+    console.log('New visible parts:', newVisibleParts);
     setVisibleParts(newVisibleParts);
-  }, [selectedComponents, config]);
+  }, [selectedComponents, config]); // Add config to dependency array
 
   const handleComponentToggle = (componentId: string) => {
-    console.log('Component toggled:', componentId);
+    console.log('Toggling component:', componentId);
     setSelectedComponents(prev => {
       const newSet = new Set(prev);
       if (newSet.has(componentId)) {
