@@ -3,6 +3,7 @@ export interface PartDetail {
   description: string;
   price: number;
   isConfigurable: boolean;
+  icon?: string;
 }
 
 export interface ConfigData {
