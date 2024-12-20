@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from 'html2canvas';
+import { components } from '@/data/components';
 import ComponentItem from './ComponentItem';
 import type { Component } from '@/types/component';
-import type { ConfigData } from '@/types/config';
 
 interface ComponentSidebarProps {
   onComponentToggle: (componentId: string) => void;
@@ -21,52 +21,15 @@ const ComponentSidebar = ({
   const navigate = useNavigate();
   const [isCapturing, setIsCapturing] = useState(false);
   const { toast } = useToast();
-  const [config, setConfig] = useState<ConfigData | null>(null);
 
-  // Load configuration from localStorage
-  useEffect(() => {
-    const loadConfig = () => {
-      const savedConfig = localStorage.getItem('pcConfig');
-      if (savedConfig) {
-        try {
-          const parsedConfig = JSON.parse(savedConfig);
-          setConfig(parsedConfig);
-        } catch (error) {
-          console.error('Failed to parse config:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load configuration",
-            variant: "destructive",
-          });
-        }
-      }
-    };
-
-    loadConfig();
-
-    // Listen for config changes from other tabs/windows
-    window.addEventListener('storage', (e) => {
-      if (e.key === 'pcConfig') {
-        loadConfig();
-      }
-    });
-
-    return () => {
-      window.removeEventListener('storage', loadConfig);
-    };
-  }, [toast]);
-
-  const toggleComponent = (componentId: string) => {
-    console.log('Toggling component:', componentId);
-    onComponentToggle(componentId);
+  const toggleComponent = (component: Component) => {
+    console.log('Toggling component:', component.id);
+    onComponentToggle(component.id);
   };
 
-  // Calculate total price based on selected components and config
   const totalPrice = Array.from(selectedComponents).reduce((sum, id) => {
-    if (!config) return sum;
-    const configKey = id.charAt(0).toUpperCase() + id.slice(1);
-    const partDetails = config.partDetails[configKey];
-    return sum + (partDetails?.price || 0);
+    const component = components.find(c => c.id === id);
+    return sum + (component?.price || 0);
   }, 0);
 
   const selectedCount = selectedComponents.size;
@@ -74,8 +37,10 @@ const ComponentSidebar = ({
   const captureScene = async () => {
     setIsCapturing(true);
     try {
+      // Wait a bit for any pending renders
       await new Promise(resolve => setTimeout(resolve, 500));
       
+      // Try multiple possible selectors for the scene element
       const sceneElement = 
         document.querySelector('.w-full.h-full.relative') || 
         document.querySelector('.w-full.h-full') ||
@@ -97,19 +62,11 @@ const ComponentSidebar = ({
       
       const image = canvas.toDataURL('image/png');
       
-      // Create cart data using config details
       const cartData = {
         screenshot: image,
-        components: Array.from(selectedComponents).map(id => {
-          const configKey = id.charAt(0).toUpperCase() + id.slice(1);
-          const details = config?.partDetails[configKey];
-          return {
-            id,
-            name: details?.name || '',
-            price: details?.price || 0,
-            description: details?.description || ''
-          };
-        }),
+        components: Array.from(selectedComponents).map(id => 
+          components.find(c => c.id === id)
+        ),
         totalPrice,
       };
       
@@ -125,25 +82,6 @@ const ComponentSidebar = ({
     }
     setIsCapturing(false);
   };
-
-  if (!config) {
-    return (
-      <div className="w-[405px] bg-gaming-muted p-6 h-full flex items-center justify-center">
-        <div className="text-gaming-text">Loading configuration...</div>
-      </div>
-    );
-  }
-
-  // Convert config parts to components array
-  const components: Component[] = Object.entries(config.partDetails)
-    .filter(([_, details]) => details.isConfigurable)
-    .map(([key, details]) => ({
-      id: key.toLowerCase(),
-      name: details.name,
-      price: details.price,
-      description: details.description,
-      icon: ShoppingCart // You might want to map specific icons based on the component type
-    }));
 
   return (
     <div className="w-[405px] bg-gaming-muted p-6 h-full overflow-auto flex flex-col">
@@ -165,7 +103,7 @@ const ComponentSidebar = ({
               key={component.id}
               component={component}
               isSelected={selectedComponents.has(component.id)}
-              onToggle={() => toggleComponent(component.id)}
+              onToggle={() => toggleComponent(component)}
             />
           ))}
         </div>
