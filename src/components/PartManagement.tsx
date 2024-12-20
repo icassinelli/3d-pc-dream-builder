@@ -39,8 +39,24 @@ const PartManagement = ({
 
   // Get meshes that should be visible in this part's viewer
   const getVisibleMeshes = () => {
-    const unassignedMeshes = getUnassignedMeshes();
-    return [...selectedMeshes, ...unassignedMeshes];
+    // Show meshes that are:
+    // 1. Currently assigned to this part
+    // 2. Currently in pending selections
+    // 3. Not assigned to any other part
+    const visibleMeshes = new Set([
+      ...selectedMeshes,
+      ...pendingSelections,
+      ...getUnassignedMeshes()
+    ]);
+
+    // Filter out meshes that are assigned to other parts
+    Object.entries(assignedMeshes).forEach(([currentPartId, meshes]) => {
+      if (currentPartId !== partId) {
+        meshes.forEach(mesh => visibleMeshes.delete(mesh));
+      }
+    });
+
+    return Array.from(visibleMeshes);
   };
 
   const handleMeshSelect = (meshName: string) => {
@@ -49,11 +65,11 @@ const PartManagement = ({
         return prev.filter(m => m !== meshName);
       } else {
         // Check if mesh is assigned to another part
-        for (const [partKey, meshes] of Object.entries(assignedMeshes)) {
-          if (partKey !== partId && meshes.includes(meshName)) {
+        for (const [currentPartId, meshes] of Object.entries(assignedMeshes)) {
+          if (currentPartId !== partId && meshes.includes(meshName)) {
             toast({
               title: "Warning",
-              description: `This mesh is already assigned to ${partKey}`,
+              description: `This mesh is already assigned to ${currentPartId}`,
               variant: "destructive",
             });
             return prev;
