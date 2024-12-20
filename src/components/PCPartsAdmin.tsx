@@ -112,7 +112,6 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
                   price={config.partDetails[part].price}
                   selectedMeshes={config.meshMap[part]}
                   onMeshSelect={handleMeshSelect}
-                  onSaveChanges={() => handleSaveChanges(part)}
                   allMeshes={availableMeshes}
                   assignedMeshes={config.meshMap}
                 />

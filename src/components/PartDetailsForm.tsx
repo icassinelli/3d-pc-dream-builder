@@ -25,6 +25,8 @@ interface PartDetailsFormProps {
 }
 
 const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps) => {
+  // ... keep existing code (form fields)
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
@@ -83,6 +85,9 @@ const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps)
         <MeshSelector
           selectedMeshes={part.meshNames}
           onMeshSelect={(meshName) => onMeshSelect(part.id, meshName)}
+          pendingSelections={[]}
+          visibleMeshes={part.meshNames}
+          hideMeshes={false}
         />
       </div>
     </div>
