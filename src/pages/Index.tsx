@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PCViewer from '@/components/PCViewer';
 import ComponentSidebar from '@/components/ComponentSidebar';
 import PCPartsAdmin from '@/components/PCPartsAdmin';
@@ -8,17 +9,18 @@ const Index = () => {
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [availableMeshes, setAvailableMeshes] = useState<string[]>([]);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.shiftKey && event.key.toLowerCase() === 'a') {
-        setIsAdminOpen(true);
+        navigate('/admin');
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [navigate]);
 
   const handleComponentToggle = (meshNames: string[]) => {
     setVisibleParts((current) => {
