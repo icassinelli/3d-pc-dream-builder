@@ -40,16 +40,12 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
-  const handleComponentToggle = (componentId: string) => {
-    console.log('Component toggled:', componentId);
-    console.log('Current config:', config);
-    
-    // Get all selected component IDs
-    const selectedIds = Array.from(selectedComponents);
-    console.log('Selected components:', selectedIds);
+  // Update visible parts whenever selected components change
+  useEffect(() => {
+    console.log('Selected components changed:', Array.from(selectedComponents));
     
     // Get all mesh names for selected components
-    const visibleMeshes = selectedIds.reduce<string[]>((meshes, componentId) => {
+    const visibleMeshes = Array.from(selectedComponents).reduce<string[]>((meshes, componentId) => {
       const componentMeshes = config.meshMap[componentId] || [];
       console.log(`Meshes for ${componentId}:`, componentMeshes);
       return [...meshes, ...componentMeshes];
@@ -57,6 +53,10 @@ const Index = () => {
     
     console.log('Setting visible meshes:', visibleMeshes);
     setVisibleParts(visibleMeshes);
+  }, [selectedComponents, config]);
+
+  const handleComponentToggle = (componentId: string) => {
+    console.log('Component toggled:', componentId);
   };
 
   return (
