@@ -51,7 +51,7 @@ const ComponentSidebar = ({
   const captureScene = async () => {
     setIsCapturing(true);
     try {
-      const sceneElement = document.querySelector('.w-full.h-full.relative');
+      const sceneElement = document.querySelector('.w-full.h-full.relative') as HTMLElement;
       if (!sceneElement) {
         throw new Error('Scene element not found');
       }
