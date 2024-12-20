@@ -26,10 +26,12 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
   useEffect(() => {
     if (!mountRef.current) return;
 
+    // Scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#0A0A0A');
     sceneRef.current = scene;
 
+    // Camera setup
     const camera = new THREE.PerspectiveCamera(
       50,
       mountRef.current.clientWidth / mountRef.current.clientHeight,
@@ -39,20 +41,27 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     camera.position.set(5, 5, 5);
     cameraRef.current = camera;
 
+    // Renderer setup with preserveDrawingBuffer
     const renderer = new THREE.WebGLRenderer({
       antialias: true,
+      preserveDrawingBuffer: true,
+      powerPreference: "high-performance"
     });
     renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.shadowMap.enabled = true;
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
+    // Controls setup
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
+    controls.minDistance = 3;
+    controls.maxDistance = 10;
     controlsRef.current = controls;
 
+    // Lighting
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
     scene.add(ambientLight);
 
@@ -60,6 +69,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     directionalLight.position.set(5, 5, 5);
     scene.add(directionalLight);
 
+    // Model loading
     const dracoLoader = new DRACOLoader();
     dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
     dracoLoader.preload();
@@ -97,40 +107,53 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
       }
     );
 
+    // Click handler
     const handleClick = (event: MouseEvent) => {
-      event.preventDefault(); // Prevent default behavior
-      event.stopPropagation(); // Stop event propagation
-      
-      if (!mountRef.current) return;
+      if (!mountRef.current || controlsRef.current?.getDistance() === undefined) return;
 
+      // Get mouse position
       const rect = mountRef.current.getBoundingClientRect();
       mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
       mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
+      // Raycast
       if (cameraRef.current && sceneRef.current) {
         raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
-        const intersects = raycasterRef.current.intersectObjects(Object.values(meshesRef.current), true);
+        const intersects = raycasterRef.current.intersectObjects(
+          Object.values(meshesRef.current),
+          false
+        );
 
         if (intersects.length > 0) {
           const mesh = intersects[0].object;
-          onMeshSelect(mesh.name);
+          if (mesh instanceof THREE.Mesh) {
+            event.stopPropagation();
+            onMeshSelect(mesh.name);
+          }
         }
       }
     };
 
     mountRef.current.addEventListener('click', handleClick);
 
+    // Animation loop
     const animate = () => {
+      if (!mountRef.current) return;
+      
       animationFrameId.current = requestAnimationFrame(animate);
+      
       if (controlsRef.current) {
         controlsRef.current.update();
       }
+      
       if (rendererRef.current && sceneRef.current && cameraRef.current) {
         rendererRef.current.render(sceneRef.current, cameraRef.current);
       }
     };
+    
     animate();
 
+    // Cleanup
     return () => {
       if (mountRef.current) {
         mountRef.current.removeEventListener('click', handleClick);
@@ -138,13 +161,17 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
-      if (mountRef.current && rendererRef.current) {
+      if (rendererRef.current && mountRef.current) {
         mountRef.current.removeChild(rendererRef.current.domElement);
         rendererRef.current.dispose();
+      }
+      if (controlsRef.current) {
+        controlsRef.current.dispose();
       }
     };
   }, [onMeshSelect, selectedMeshes]);
 
+  // Update mesh visibility and colors
   useEffect(() => {
     Object.entries(meshesRef.current).forEach(([name, mesh]) => {
       if (mesh.material instanceof THREE.MeshPhongMaterial) {
