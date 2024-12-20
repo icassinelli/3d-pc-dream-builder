@@ -20,6 +20,7 @@ const ComponentSidebar = ({
 }: ComponentSidebarProps) => {
   const navigate = useNavigate();
   const [isCapturing, setIsCapturing] = useState(false);
+  const { toast } = useToast();
 
   // Initialize all components as selected by default
   useState(() => {
