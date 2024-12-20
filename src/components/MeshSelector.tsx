@@ -1,84 +1,35 @@
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { toast } from '@/hooks/use-toast';
 import LoadingOverlay from './LoadingOverlay';
-
-interface MeshSelectorProps {
-  onMeshSelect: (meshName: string) => void;
-  selectedMeshes: string[];
-  hideMeshes?: boolean;
-}
+import { MeshSelectorProps, SceneRefs } from '@/types/mesh';
+import { setupMeshMaterials, handleMeshSelection, initializeScene } from '@/utils/meshUtils';
 
 const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: MeshSelectorProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
-  const sceneRef = useRef<THREE.Scene>();
-  const cameraRef = useRef<THREE.PerspectiveCamera>();
-  const controlsRef = useRef<OrbitControls>();
-  const rendererRef = useRef<THREE.WebGLRenderer>();
-  const meshesRef = useRef<{ [key: string]: THREE.Mesh }>({});
-  const raycasterRef = useRef<THREE.Raycaster>(new THREE.Raycaster());
-  const animationFrameId = useRef<number>();
+  const sceneRef = useRef<SceneRefs>();
   const [isLoading, setIsLoading] = useState(true);
-  const [localSelectedMeshes, setLocalSelectedMeshes] = useState<string[]>(selectedMeshes);
-
-  useEffect(() => {
-    setLocalSelectedMeshes(selectedMeshes);
-  }, [selectedMeshes]);
 
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // Scene setup
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color('#0A0A0A');
-    sceneRef.current = scene;
+    // Initialize scene
+    const sceneRefs = initializeScene(mountRef.current);
+    sceneRef.current = sceneRefs;
+    mountRef.current.appendChild(sceneRefs.renderer.domElement);
 
-    // Camera setup
-    const camera = new THREE.PerspectiveCamera(
-      50,
-      mountRef.current.clientWidth / mountRef.current.clientHeight,
-      0.1,
-      1000
-    );
-    camera.position.set(5, 5, 5);
-    cameraRef.current = camera;
+    // Prevent context menu
+    sceneRefs.renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // Renderer setup
-    const renderer = new THREE.WebGLRenderer({
-      antialias: true,
-      preserveDrawingBuffer: true,
-      powerPreference: "high-performance"
-    });
-    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    mountRef.current.appendChild(renderer.domElement);
-    rendererRef.current = renderer;
-
-    // Controls setup
-    const controls = new OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.minDistance = 3;
-    controls.maxDistance = 10;
-    controls.mouseButtons = {
-      LEFT: THREE.MOUSE.ROTATE,
-      MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.PAN
-    };
-    renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
-    controlsRef.current = controls;
-
-    // Lighting
+    // Lighting setup
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
+    sceneRefs.scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.set(5, 5, 5);
-    scene.add(directionalLight);
+    sceneRefs.scene.add(directionalLight);
 
     // Model loading
     const dracoLoader = new DRACOLoader();
@@ -97,12 +48,12 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
 
         gltf.scene.traverse((child) => {
           if (child instanceof THREE.Mesh) {
-            meshesRef.current[child.name] = child;
+            sceneRefs.meshes[child.name] = child;
             setupMeshMaterials(child, selectedMeshes.includes(child.name));
           }
         });
 
-        scene.add(gltf.scene);
+        sceneRefs.scene.add(gltf.scene);
         setIsLoading(false);
       },
       undefined,
@@ -118,80 +69,50 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
 
     // Right-click handler for mesh selection
     const handleContextMenu = (event: MouseEvent) => {
-      event.preventDefault();
-      
-      const rect = renderer.domElement.getBoundingClientRect();
-      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-      
-      raycasterRef.current.setFromCamera(new THREE.Vector2(x, y), camera);
-      const intersects = raycasterRef.current.intersectObjects(Object.values(meshesRef.current), false);
-      
-      if (intersects.length > 0 && intersects[0].object instanceof THREE.Mesh) {
-        const meshName = intersects[0].object.name;
-        const isSelected = localSelectedMeshes.includes(meshName);
-        
-        // Toggle selection
-        if (isSelected) {
-          setLocalSelectedMeshes(prev => prev.filter(name => name !== meshName));
-          setupMeshMaterials(intersects[0].object as THREE.Mesh, false);
-        } else {
-          setLocalSelectedMeshes(prev => [...prev, meshName]);
-          setupMeshMaterials(intersects[0].object as THREE.Mesh, true);
-        }
-        
-        onMeshSelect(meshName);
+      if (sceneRef.current) {
+        handleMeshSelection(event, sceneRef.current, selectedMeshes, onMeshSelect);
       }
     };
 
-    renderer.domElement.addEventListener('contextmenu', handleContextMenu);
+    sceneRefs.renderer.domElement.addEventListener('contextmenu', handleContextMenu);
 
     // Animation loop
     const animate = () => {
-      animationFrameId.current = requestAnimationFrame(animate);
+      if (!sceneRef.current) return;
       
-      if (controlsRef.current) {
-        controlsRef.current.update();
-      }
-      
-      if (rendererRef.current && sceneRef.current && cameraRef.current) {
-        rendererRef.current.render(sceneRef.current, cameraRef.current);
-      }
+      sceneRef.current.animationFrameId = requestAnimationFrame(animate);
+      sceneRef.current.controls.update();
+      sceneRef.current.renderer.render(sceneRef.current.scene, sceneRef.current.camera);
     };
     
     animate();
 
     // Cleanup
     return () => {
-      renderer.domElement.removeEventListener('contextmenu', handleContextMenu);
-      if (animationFrameId.current) {
-        cancelAnimationFrame(animationFrameId.current);
-      }
-      if (rendererRef.current && mountRef.current) {
-        mountRef.current.removeChild(rendererRef.current.domElement);
-        rendererRef.current.dispose();
-      }
-      if (controlsRef.current) {
-        controlsRef.current.dispose();
+      if (sceneRef.current) {
+        sceneRef.current.renderer.domElement.removeEventListener('contextmenu', handleContextMenu);
+        if (sceneRef.current.animationFrameId) {
+          cancelAnimationFrame(sceneRef.current.animationFrameId);
+        }
+        if (mountRef.current) {
+          mountRef.current.removeChild(sceneRef.current.renderer.domElement);
+        }
+        sceneRef.current.renderer.dispose();
+        sceneRef.current.controls.dispose();
       }
     };
-  }, [onMeshSelect]);
+  }, [onMeshSelect, selectedMeshes]);
 
   // Update mesh visibility and materials
   useEffect(() => {
-    Object.entries(meshesRef.current).forEach(([name, mesh]) => {
-      const isSelected = localSelectedMeshes.includes(name);
+    if (!sceneRef.current) return;
+    
+    Object.entries(sceneRef.current.meshes).forEach(([name, mesh]) => {
+      const isSelected = selectedMeshes.includes(name);
       mesh.visible = hideMeshes ? !isSelected : true;
       setupMeshMaterials(mesh, isSelected);
     });
-  }, [localSelectedMeshes, hideMeshes]);
-
-  const setupMeshMaterials = (mesh: THREE.Mesh, isSelected: boolean) => {
-    const material = new THREE.MeshPhongMaterial({
-      color: isSelected ? 0x00A3FF : 0xCCCCCC,
-    });
-    mesh.material = material;
-  };
+  }, [selectedMeshes, hideMeshes]);
 
   return (
     <div ref={mountRef} className="w-full h-[400px] relative rounded-lg overflow-hidden">
