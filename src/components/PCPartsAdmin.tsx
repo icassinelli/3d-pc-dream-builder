@@ -169,26 +169,47 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
           </AccordionContent>
         </AccordionItem>
 
-        <AccordionItem value="meshes">
-          <AccordionTrigger className="text-gaming-text hover:text-gaming-accent">
-            Mesh Selection for {currentPart}
-          </AccordionTrigger>
-          <AccordionContent>
-            <div className="space-y-4">
-              <MeshSelector
-                selectedMeshes={selectedMeshes}
-                onMeshSelect={handleMeshSelect}
-              />
-              <Button 
-                onClick={() => handleJsonUpdate(jsonConfig)}
-                className="w-full bg-gaming-accent hover:bg-gaming-accent/80"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Save Configuration
-              </Button>
-            </div>
-          </AccordionContent>
-        </AccordionItem>
+        {Object.keys(config.meshMap).map((part) => (
+          <AccordionItem key={part} value={part}>
+            <AccordionTrigger className="text-gaming-text hover:text-gaming-accent">
+              {config.partDetails[part].name} Configuration
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="space-y-4">
+                <PartDetailsForm
+                  part={{
+                    id: part,
+                    code: part,
+                    name: config.partDetails[part].name,
+                    description: config.partDetails[part].description,
+                    price: config.partDetails[part].price,
+                    isConfigurable: config.partDetails[part].isConfigurable,
+                    meshNames: config.meshMap[part]
+                  }}
+                  onUpdate={(updatedPart) => {
+                    setConfig({
+                      ...config,
+                      partDetails: {
+                        ...config.partDetails,
+                        [part]: {
+                          name: updatedPart.name,
+                          description: updatedPart.description,
+                          price: updatedPart.price,
+                          isConfigurable: updatedPart.isConfigurable
+                        }
+                      }
+                    });
+                    setJsonConfig(JSON.stringify(config, null, 2));
+                  }}
+                  onMeshSelect={(partId, meshName) => {
+                    setCurrentPart(partId);
+                    handleMeshSelect(meshName);
+                  }}
+                />
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        ))}
 
         <AccordionItem value="current">
           <AccordionTrigger className="text-gaming-text hover:text-gaming-accent">
