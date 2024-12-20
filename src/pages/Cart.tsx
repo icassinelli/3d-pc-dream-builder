@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingCart, ArrowLeft, CreditCard } from 'lucide-react';
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 
 interface CartData {
   screenshot: string;
@@ -19,7 +18,6 @@ interface CartData {
 const Cart = () => {
   const [cartData, setCartData] = useState<CartData | null>(null);
   const navigate = useNavigate();
-  const { toast } = useToast();
 
   useEffect(() => {
     const savedCart = localStorage.getItem('pcCart');
@@ -29,10 +27,6 @@ const Cart = () => {
   }, []);
 
   const handleCheckout = () => {
-    toast({
-      title: "Order Placed!",
-      description: "Thank you for your purchase. We'll process your order soon.",
-    });
     localStorage.removeItem('pcCart');
     setTimeout(() => navigate('/'), 2000);
   };
@@ -42,7 +36,7 @@ const Cart = () => {
       <div className="min-h-screen bg-gaming-background text-gaming-text p-8">
         <div className="max-w-4xl mx-auto text-center">
           <ShoppingCart className="mx-auto h-12 w-12 text-gaming-accent mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Your cart is empty</h2>
+          <h2 className="text-2xl font-bold mb-2 text-gaming-text">Your cart is empty</h2>
           <p className="text-gaming-text/70 mb-4">Add some awesome PC components to get started!</p>
           <Button 
             onClick={() => navigate('/')}
@@ -68,13 +62,13 @@ const Cart = () => {
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Builder
           </Button>
-          <h1 className="text-3xl font-bold">Your Cart</h1>
+          <h1 className="text-3xl font-bold text-gaming-text">Your Cart</h1>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             <Card className="bg-gaming-muted border-gaming-accent/20 p-6">
-              <h2 className="text-xl font-bold mb-4">Your Custom PC Build</h2>
+              <h2 className="text-xl font-bold mb-4 text-gaming-text">Your Custom PC Build</h2>
               {cartData.screenshot && (
                 <img 
                   src={cartData.screenshot} 
@@ -86,7 +80,7 @@ const Cart = () => {
                 {cartData.components.map((component) => (
                   <div key={component.id} className="flex justify-between items-center py-3 border-b border-gaming-accent/20">
                     <div>
-                      <h3 className="font-medium">{component.name}</h3>
+                      <h3 className="font-medium text-gaming-text">{component.name}</h3>
                       <p className="text-sm text-gaming-text/70">{component.description}</p>
                     </div>
                     <span className="font-medium text-gaming-accent">
@@ -100,18 +94,18 @@ const Cart = () => {
 
           <div>
             <Card className="bg-gaming-muted border-gaming-accent/20 p-6 sticky top-8">
-              <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+              <h2 className="text-xl font-bold mb-4 text-gaming-text">Order Summary</h2>
               <div className="space-y-3">
                 <div className="flex justify-between text-sm">
                   <span className="text-gaming-text/70">Subtotal</span>
-                  <span>${cartData.totalPrice.toFixed(2)}</span>
+                  <span className="text-gaming-text">${cartData.totalPrice.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gaming-text/70">Shipping</span>
-                  <span>Free</span>
+                  <span className="text-gaming-text">Free</span>
                 </div>
                 <div className="flex justify-between font-bold pt-3 border-t border-gaming-accent/20">
-                  <span>Total</span>
+                  <span className="text-gaming-text">Total</span>
                   <span className="text-gaming-accent">${cartData.totalPrice.toFixed(2)}</span>
                 </div>
               </div>

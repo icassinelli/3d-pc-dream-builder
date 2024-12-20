@@ -18,7 +18,6 @@ const ComponentSidebar = ({
   selectedComponents,
   setSelectedComponents,
 }: ComponentSidebarProps) => {
-  const { toast } = useToast();
   const navigate = useNavigate();
   const [isCapturing, setIsCapturing] = useState(false);
 
@@ -78,20 +77,9 @@ const ComponentSidebar = ({
       };
       
       localStorage.setItem('pcCart', JSON.stringify(cartData));
-      
-      toast({
-        title: "Added to Cart!",
-        description: `Your custom PC setup with ${selectedCount} components has been saved.`,
-      });
-      
       navigate('/cart');
     } catch (error) {
       console.error('Capture error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to capture your setup. Please try again.",
-        variant: "destructive",
-      });
     }
     setIsCapturing(false);
   };
