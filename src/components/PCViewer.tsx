@@ -56,17 +56,27 @@ const PCViewer = ({ visibleParts }: PCViewerProps) => {
 
     // Load model
     const loader = new GLTFLoader();
-    loader.load('/path/to/your/model.glb', (gltf) => {
-      gltf.scene.traverse((child) => {
-        if (child instanceof THREE.Mesh) {
-          // Store each mesh by name for later visibility toggling
-          modelPartsRef.current[child.name] = child;
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-      scene.add(gltf.scene);
-    });
+    console.log('Loading model...');
+    loader.load('/PC.glb', 
+      (gltf) => {
+        console.log('Model loaded successfully!');
+        gltf.scene.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            console.log('Found mesh:', child.name);
+            modelPartsRef.current[child.name] = child;
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        scene.add(gltf.scene);
+      },
+      (progress) => {
+        console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
+      },
+      (error) => {
+        console.error('Error loading model:', error);
+      }
+    );
 
     // Animation loop
     const animate = () => {
