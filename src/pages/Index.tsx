@@ -15,7 +15,7 @@ const Index = () => {
     if (savedConfig) {
       const config = JSON.parse(savedConfig);
       // Show all meshes by default
-      const allMeshes = Object.values(config.meshMap).flat();
+      const allMeshes = Object.values(config.meshMap).flat() as string[];
       setVisibleParts(allMeshes);
       // Mark all configurable components as selected
       setSelectedComponents(new Set(Object.keys(config.meshMap).filter(
@@ -35,9 +35,11 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
-  const handleComponentToggle = (componentName: string) => {
+  const handleComponentToggle = (meshNames: string[]) => {
     setSelectedComponents(prev => {
       const newSet = new Set(prev);
+      const componentName = meshNames[0]; // Assuming first mesh name is the component identifier
+      
       if (newSet.has(componentName)) {
         newSet.delete(componentName);
       } else {
