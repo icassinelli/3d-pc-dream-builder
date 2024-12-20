@@ -3,14 +3,22 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Plus, ChevronDown, ChevronUp } from 'lucide-react';
-import MeshSelector from '@/components/MeshSelector';
 import PCPartsAdmin from '@/components/PCPartsAdmin';
 
-interface Part {
-  id: string;
+interface PartDetail {
   name: string;
   description: string;
   price: number;
+  isConfigurable: boolean;
+}
+
+interface Part {
+  id: string;
+  code: string;
+  name: string;
+  description: string;
+  price: number;
+  isConfigurable: boolean;
   meshNames: string[];
 }
 
@@ -19,16 +27,20 @@ const Admin = () => {
   const [parts, setParts] = useState<Part[]>([
     {
       id: '1',
+      code: 'Monitor',
       name: '27" Gaming Monitor',
       description: '1440p 165Hz Display',
       price: 299.99,
+      isConfigurable: true,
       meshNames: [],
     },
     {
       id: '2',
+      code: 'PC',
       name: 'Gaming Tower',
-      description: 'RGB Custom Build',
+      description: 'RTX 4070, i7, 32GB RAM',
       price: 1499.99,
+      isConfigurable: true,
       meshNames: [],
     },
   ]);
@@ -53,9 +65,11 @@ const Admin = () => {
   const addNewPart = () => {
     const newPart: Part = {
       id: crypto.randomUUID(),
+      code: '',
       name: 'New Part',
       description: '',
       price: 0,
+      isConfigurable: true,
       meshNames: [],
     };
     setParts([...parts, newPart]);
@@ -122,7 +136,18 @@ const Admin = () => {
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm text-gray-400 mb-1">Name</label>
+                        <label className="block text-sm text-gray-400 mb-1">Part Code</label>
+                        <Input
+                          value={part.code}
+                          onChange={(e) => setParts(parts.map(p => 
+                            p.id === part.id ? { ...p, code: e.target.value } : p
+                          ))}
+                          className="bg-gaming-muted text-gaming-text border-gaming-accent/20"
+                          placeholder="e.g., Monitor, PC, Keyboard"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Display Name</label>
                         <Input
                           value={part.name}
                           onChange={(e) => setParts(parts.map(p => 
@@ -131,6 +156,9 @@ const Admin = () => {
                           className="bg-gaming-muted text-gaming-text border-gaming-accent/20"
                         />
                       </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm text-gray-400 mb-1">Price</label>
                         <Input
@@ -142,8 +170,19 @@ const Admin = () => {
                           className="bg-gaming-muted text-gaming-text border-gaming-accent/20"
                         />
                       </div>
+                      <div>
+                        <label className="block text-sm text-gray-400 mb-1">Configurable</label>
+                        <Input
+                          type="checkbox"
+                          checked={part.isConfigurable}
+                          onChange={(e) => setParts(parts.map(p => 
+                            p.id === part.id ? { ...p, isConfigurable: e.target.checked } : p
+                          ))}
+                          className="mt-2"
+                        />
+                      </div>
                     </div>
-                    
+
                     <div>
                       <label className="block text-sm text-gray-400 mb-1">Description</label>
                       <Input

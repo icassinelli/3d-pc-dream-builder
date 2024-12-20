@@ -7,7 +7,6 @@ import PCPartsAdmin from '@/components/PCPartsAdmin';
 const Index = () => {
   const [visibleParts, setVisibleParts] = useState<string[]>([]);
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [availableMeshes, setAvailableMeshes] = useState<string[]>([]);
   const navigate = useNavigate();
 
@@ -53,11 +52,7 @@ const Index = () => {
         selectedComponents={selectedComponents}
         setSelectedComponents={setSelectedComponents}
       />
-      <PCPartsAdmin
-        open={isAdminOpen}
-        onOpenChange={setIsAdminOpen}
-        availableMeshes={availableMeshes}
-      />
+      <PCPartsAdmin availableMeshes={availableMeshes} />
     </div>
   );
 };
