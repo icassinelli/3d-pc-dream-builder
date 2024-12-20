@@ -1,62 +1,13 @@
 import { useState } from 'react';
-import { Check, Monitor, Computer, Keyboard, Mouse, Speaker, ShoppingCart } from 'lucide-react';
+import { ShoppingCart } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from 'html2canvas';
-
-interface Component {
-  id: string;
-  name: string;
-  price: number;
-  meshNames: string[];
-  description: string;
-  icon: React.ElementType;
-}
-
-const components: Component[] = [
-  {
-    id: 'monitor',
-    name: '27" Gaming Monitor',
-    price: 299.99,
-    meshNames: ['monitor_base', 'monitor_screen'],
-    description: '27-inch QHD display with 165Hz refresh rate and 1ms response time',
-    icon: Monitor,
-  },
-  {
-    id: 'tower',
-    name: 'Gaming Tower',
-    price: 999.99,
-    meshNames: ['tower_case', 'tower_front'],
-    description: 'High-performance gaming PC with RTX 4070 and latest gen processor',
-    icon: Computer,
-  },
-  {
-    id: 'keyboard',
-    name: 'Mechanical Keyboard',
-    price: 149.99,
-    meshNames: ['keyboard'],
-    description: 'RGB mechanical keyboard with Cherry MX switches',
-    icon: Keyboard,
-  },
-  {
-    id: 'mouse',
-    name: 'Gaming Mouse',
-    price: 79.99,
-    meshNames: ['mouse'],
-    description: '16000 DPI gaming mouse with programmable buttons',
-    icon: Mouse,
-  },
-  {
-    id: 'speakers',
-    name: '2.1 Speaker System',
-    price: 199.99,
-    meshNames: ['speaker_left', 'speaker_right', 'speaker_sub'],
-    description: 'Premium 2.1 speaker system with powerful subwoofer',
-    icon: Speaker,
-  },
-];
+import { components } from '@/data/components';
+import ComponentItem from './ComponentItem';
+import type { Component } from '@/types/component';
 
 interface ComponentSidebarProps {
-  onComponentToggle: (meshNames: string[]) => void;
+  onComponentToggle: (componentId: string) => void;
   selectedComponents: Set<string>;
   setSelectedComponents: (components: Set<string>) => void;
 }
@@ -75,7 +26,7 @@ const ComponentSidebar = ({
       const allComponents = new Set(components.map(comp => comp.id));
       setSelectedComponents(allComponents);
       // Trigger visibility for all components
-      components.forEach(comp => onComponentToggle(comp.meshNames));
+      components.forEach(comp => onComponentToggle(comp.id));
     }
   });
 
@@ -87,7 +38,7 @@ const ComponentSidebar = ({
       newSelected.add(component.id);
     }
     setSelectedComponents(newSelected);
-    onComponentToggle(component.meshNames);
+    onComponentToggle(component.id);
   };
 
   const totalPrice = Array.from(selectedComponents).reduce((sum, id) => {
@@ -142,33 +93,12 @@ const ComponentSidebar = ({
         
         <div className="space-y-2">
           {components.map((component) => (
-            <button
+            <ComponentItem
               key={component.id}
-              onClick={() => toggleComponent(component)}
-              className={`w-full p-4 rounded-lg transition-all ${
-                selectedComponents.has(component.id)
-                  ? 'bg-gaming-accent/20 text-white'
-                  : 'bg-gaming-background text-gaming-text hover:bg-gaming-accent/10'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <component.icon className="w-5 h-5" />
-                <div className="flex-1 text-left">
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium">{component.name}</span>
-                    <span className="text-gaming-accent">${component.price.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center mt-1">
-                    <p className="text-sm text-gaming-text/70">
-                      {component.description}
-                    </p>
-                    {selectedComponents.has(component.id) && (
-                      <Check className="w-4 h-4 ml-2 flex-shrink-0" />
-                    )}
-                  </div>
-                </div>
-              </div>
-            </button>
+              component={component}
+              isSelected={selectedComponents.has(component.id)}
+              onToggle={toggleComponent}
+            />
           ))}
         </div>
       </div>
