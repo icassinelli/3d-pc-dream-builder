@@ -47,7 +47,7 @@ const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps)
 
   return (
     <div className="space-y-6 animate-part-in">
-      <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-4">
         <div>
           <Label className="text-sm text-gray-400">Title</Label>
           <Input
@@ -68,16 +68,18 @@ const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps)
           />
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="configurable"
-            checked={localPart.isConfigurable}
-            onCheckedChange={(checked) => setLocalPart({ ...localPart, isConfigurable: checked })}
-            className="data-[state=checked]:bg-gaming-accent"
-          />
-          <Label htmlFor="configurable" className="text-sm text-gray-400">
-            Configurable Part
-          </Label>
+        <div className="flex items-end">
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="configurable"
+              checked={localPart.isConfigurable}
+              onCheckedChange={(checked) => setLocalPart({ ...localPart, isConfigurable: checked })}
+              className="data-[state=checked]:bg-gaming-accent"
+            />
+            <Label htmlFor="configurable" className="text-sm text-gray-400">
+              Configurable Part
+            </Label>
+          </div>
         </div>
 
         {localPart.isConfigurable && (
