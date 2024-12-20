@@ -6,6 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { ConfigData } from '@/types/config';
 import { MeshVisibilityProvider } from '@/contexts/MeshVisibilityContext';
 import { components } from '@/data/components';
+import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(() => 
@@ -19,32 +20,64 @@ const Index = () => {
     partDetails: {}
   });
 
-  // Load config on mount
+  // Load initial config
   useEffect(() => {
-    const savedConfig = localStorage.getItem('pcConfig');
-    if (savedConfig) {
-      try {
-        const parsedConfig = JSON.parse(savedConfig);
-        setConfig(parsedConfig);
-        console.log('Loaded config:', parsedConfig);
-      } catch (error) {
-        console.error('Error parsing config:', error);
+    const loadConfig = () => {
+      const savedConfig = localStorage.getItem('pcConfig');
+      if (savedConfig) {
+        try {
+          const parsedConfig = JSON.parse(savedConfig);
+          console.log('Loading config:', parsedConfig);
+          setConfig(parsedConfig);
+          
+          // Update visible parts based on selected components and new config
+          const newVisibleParts = Array.from(selectedComponents).reduce<string[]>((meshes, componentId) => {
+            const componentMeshes = parsedConfig.meshMap[componentId] || [];
+            return [...meshes, ...componentMeshes];
+          }, []);
+          
+          setVisibleParts(newVisibleParts);
+        } catch (error) {
+          console.error('Error parsing config:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load configuration",
+            variant: "destructive",
+          });
+        }
       }
-    }
-  }, []);
+    };
 
-  // Update visible meshes when selected components or config changes
+    // Load initial config
+    loadConfig();
+
+    // Listen for storage events (config updates from other tabs)
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'pcConfig' && event.newValue !== null) {
+        loadConfig();
+        toast({
+          title: "Configuration Updated",
+          description: "The configuration has been updated",
+        });
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [selectedComponents]);
+
+  // Update visible parts when selected components change
   useEffect(() => {
-    console.log('Selected components changed:', Array.from(selectedComponents));
-    
-    const visibleMeshes = Array.from(selectedComponents).reduce<string[]>((meshes, componentId) => {
+    const newVisibleParts = Array.from(selectedComponents).reduce<string[]>((meshes, componentId) => {
       const componentMeshes = config.meshMap[componentId] || [];
-      console.log(`Meshes for ${componentId}:`, componentMeshes);
       return [...meshes, ...componentMeshes];
     }, []);
     
-    console.log('Setting visible meshes:', visibleMeshes);
-    setVisibleParts(visibleMeshes);
+    console.log('Updating visible parts:', newVisibleParts);
+    setVisibleParts(newVisibleParts);
   }, [selectedComponents, config]);
 
   const handleComponentToggle = (componentId: string) => {

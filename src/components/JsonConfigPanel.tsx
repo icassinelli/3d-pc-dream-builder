@@ -64,9 +64,13 @@ const JsonConfigPanel = ({ jsonConfig, setJsonConfig, setConfig }: JsonConfigPan
       if (validateConfig(parsed)) {
         setConfig(parsed);
         setJsonConfig(newJson);
+        
+        // Persist to localStorage
+        localStorage.setItem('pcConfig', newJson);
+        
         toast({
           title: "Success",
-          description: "Configuration updated successfully",
+          description: "Configuration updated and saved successfully",
         });
       }
     } catch (error) {
