@@ -11,7 +11,7 @@ interface PartManagementProps {
   price: number;
   selectedMeshes: string[];
   onMeshSelect: (partId: string, meshName: string) => void;
-  onSaveChanges: () => void;
+  onSaveChanges: (pendingMeshes: string[]) => void;
   allMeshes: string[];
   assignedMeshes: Record<string, string[]>;
 }
@@ -30,7 +30,6 @@ const PartManagement = ({
   const [hideMeshes, setHideMeshes] = useState(false);
   const [pendingSelections, setPendingSelections] = useState<string[]>([...selectedMeshes]);
 
-  // Get unassigned meshes (meshes not assigned to any part)
   const getUnassignedMeshes = () => {
     const allAssignedMeshes = new Set(
       Object.values(assignedMeshes).flat()
@@ -66,12 +65,7 @@ const PartManagement = ({
   };
 
   const handleSaveChanges = () => {
-    onMeshSelect(partId, pendingSelections.join(','));
-    onSaveChanges();
-    toast({
-      title: "Success",
-      description: "Mesh assignments saved successfully",
-    });
+    onSaveChanges(pendingSelections);
   };
 
   const toggleMeshVisibility = () => {

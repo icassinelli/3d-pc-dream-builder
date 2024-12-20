@@ -78,11 +78,37 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
     }));
   };
 
-  const handleSaveChanges = (partId: string) => {
+  const handleSaveChanges = (partId: string, pendingMeshes: string[]) => {
+    // First, remove these meshes from all other parts
+    const updatedMeshMap = { ...config.meshMap };
+    
+    // Remove the pending meshes from all other parts
+    Object.keys(updatedMeshMap).forEach(part => {
+      if (part !== partId) {
+        updatedMeshMap[part] = updatedMeshMap[part].filter(
+          mesh => !pendingMeshes.includes(mesh)
+        );
+      }
+    });
+
+    // Assign the pending meshes to the current part
+    updatedMeshMap[partId] = pendingMeshes;
+
+    // Update the config state
+    setConfig(prev => ({
+      ...prev,
+      meshMap: updatedMeshMap
+    }));
+
+    // Update the JSON representation
+    setJsonConfig(JSON.stringify({ ...config, meshMap: updatedMeshMap }, null, 2));
+
     toast({
       title: "Changes Saved",
       description: `Updated mesh assignments for ${config.partDetails[partId].name}`,
     });
+
+    console.log('Updated meshMap:', updatedMeshMap);
   };
 
   const toggleSection = (section: string) => {
@@ -119,7 +145,7 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
                   price={config.partDetails[part].price}
                   selectedMeshes={config.meshMap[part]}
                   onMeshSelect={handleMeshSelect}
-                  onSaveChanges={() => handleSaveChanges(part)}
+                  onSaveChanges={(pendingMeshes) => handleSaveChanges(part, pendingMeshes)}
                   allMeshes={availableMeshes}
                   assignedMeshes={config.meshMap}
                 />
