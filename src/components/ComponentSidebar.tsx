@@ -69,6 +69,16 @@ const ComponentSidebar = ({
   const { toast } = useToast();
   const [isCapturing, setIsCapturing] = useState(false);
 
+  // Initialize all components as selected by default
+  useState(() => {
+    if (selectedComponents.size === 0) {
+      const allComponents = new Set(components.map(comp => comp.id));
+      setSelectedComponents(allComponents);
+      // Trigger visibility for all components
+      components.forEach(comp => onComponentToggle(comp.meshNames));
+    }
+  });
+
   const toggleComponent = (component: Component) => {
     const newSelected = new Set(selectedComponents);
     if (newSelected.has(component.id)) {
@@ -93,7 +103,6 @@ const ComponentSidebar = ({
       const canvas = await html2canvas(document.querySelector('#scene-container') as HTMLElement);
       const image = canvas.toDataURL('image/png');
       
-      // Save cart data to localStorage
       const cartData = {
         screenshot: image,
         components: Array.from(selectedComponents).map(id => 
@@ -118,7 +127,7 @@ const ComponentSidebar = ({
   };
 
   return (
-    <div className="w-80 bg-gaming-muted p-6 h-full overflow-auto flex flex-col">
+    <div className="w-[405px] bg-gaming-muted p-6 h-full overflow-auto flex flex-col">
       <div className="flex-1">
         <h2 className="text-2xl font-bold text-gaming-text mb-2">
           Customize Your Gaming PC
@@ -147,13 +156,16 @@ const ComponentSidebar = ({
                 <div className="flex-1 text-left">
                   <div className="flex justify-between items-center">
                     <span className="font-medium">{component.name}</span>
+                    <span className="text-gaming-accent">${component.price.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between items-center mt-1">
+                    <p className="text-sm text-gaming-text/70">
+                      {component.description}
+                    </p>
                     {selectedComponents.has(component.id) && (
-                      <Check className="w-4 h-4" />
+                      <Check className="w-4 h-4 ml-2 flex-shrink-0" />
                     )}
                   </div>
-                  <p className="text-sm text-gaming-text/70 mt-1">
-                    {component.description}
-                  </p>
                 </div>
               </div>
             </button>
