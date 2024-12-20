@@ -54,7 +54,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     mountRef.current.appendChild(renderer.domElement);
     rendererRef.current = renderer;
 
-    // Controls setup - Enable left click for orbit
+    // Controls setup
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
@@ -63,7 +63,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.NONE
+      RIGHT: THREE.MOUSE.PAN
     };
     controlsRef.current = controls;
 
@@ -125,7 +125,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
       }
     };
 
-    mountRef.current.addEventListener('contextmenu', handleContextMenu);
+    renderer.domElement.addEventListener('contextmenu', handleContextMenu);
 
     // Animation loop
     const animate = () => {
@@ -144,7 +144,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
 
     // Cleanup
     return () => {
-      mountRef.current?.removeEventListener('contextmenu', handleContextMenu);
+      renderer.domElement.removeEventListener('contextmenu', handleContextMenu);
       
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);

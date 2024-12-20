@@ -4,12 +4,11 @@ export const setupMeshMaterials = (
   mesh: THREE.Mesh,
   isSelected: boolean
 ) => {
-  if (mesh.material instanceof THREE.MeshPhongMaterial) {
-    mesh.material.color.setHex(isSelected ? 0x00A3FF : 0xCCCCCC);
-  } else {
-    mesh.material = new THREE.MeshPhongMaterial({
+  if (mesh.material instanceof THREE.Material) {
+    const material = new THREE.MeshPhongMaterial({
       color: isSelected ? 0x00A3FF : 0xCCCCCC,
     });
+    mesh.material = material;
   }
 };
 
@@ -30,7 +29,6 @@ export const handleMeshIntersection = (
   if (intersects.length > 0) {
     const mesh = intersects[0].object;
     if (mesh instanceof THREE.Mesh) {
-      event.preventDefault();
       onSelect(mesh.name);
     }
   }
