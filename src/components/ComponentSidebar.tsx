@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -23,16 +23,17 @@ const ComponentSidebar = ({
   const { toast } = useToast();
 
   // Initialize all components as selected by default
-  useState(() => {
+  useEffect(() => {
     if (selectedComponents.size === 0) {
       const allComponents = new Set(components.map(comp => comp.id));
       setSelectedComponents(allComponents);
       // Trigger visibility for all components
       components.forEach(comp => onComponentToggle(comp.id));
     }
-  });
+  }, [selectedComponents, setSelectedComponents, onComponentToggle]);
 
   const toggleComponent = (component: Component) => {
+    console.log('Toggling component:', component.id);
     const newSelected = new Set(selectedComponents);
     if (newSelected.has(component.id)) {
       newSelected.delete(component.id);
@@ -70,10 +71,10 @@ const ComponentSidebar = ({
       const canvas = await html2canvas(sceneElement as HTMLElement, {
         useCORS: true,
         backgroundColor: '#1a1a1a',
-        scale: 2, // Increase quality
-        logging: true, // Enable logging for debugging
-        allowTaint: true, // Allow cross-origin images
-        foreignObjectRendering: true // Enable rendering of foreign objects
+        scale: 2,
+        logging: true,
+        allowTaint: true,
+        foreignObjectRendering: true
       });
       
       const image = canvas.toDataURL('image/png');
@@ -119,7 +120,7 @@ const ComponentSidebar = ({
               key={component.id}
               component={component}
               isSelected={selectedComponents.has(component.id)}
-              onToggle={toggleComponent}
+              onToggle={() => toggleComponent(component)}
             />
           ))}
         </div>
