@@ -1,5 +1,6 @@
 import { ConfigData } from '@/types/config';
 import PartManagement from '../PartManagement';
+import PartDetailsForm from '../PartDetailsForm';
 import { toast } from '@/hooks/use-toast';
 
 interface PartListProps {
@@ -55,6 +56,29 @@ const PartList = ({
     });
   };
 
+  const handlePartUpdate = (partId: string, updatedPart: any) => {
+    const newConfig = {
+      ...config,
+      partDetails: {
+        ...config.partDetails,
+        [partId]: {
+          name: updatedPart.name,
+          description: updatedPart.description,
+          price: updatedPart.price,
+          isConfigurable: updatedPart.isConfigurable,
+          icon: updatedPart.icon,
+        }
+      }
+    };
+    setConfig(newConfig);
+    setJsonConfig(JSON.stringify(newConfig, null, 2));
+
+    toast({
+      title: "Part Updated",
+      description: `Successfully updated ${updatedPart.name}`,
+    });
+  };
+
   return (
     <div className="space-y-3">
       {Object.keys(config.meshMap).map((part) => (
@@ -77,17 +101,33 @@ const PartList = ({
           </div>
           {expandedSection === part && (
             <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
-              <PartManagement
-                partId={part}
-                partName={config.partDetails[part].name}
-                description={config.partDetails[part].description}
-                price={config.partDetails[part].price}
-                selectedMeshes={config.meshMap[part]}
-                onMeshSelect={handleMeshSelect}
-                onSaveChanges={(pendingMeshes) => handleSaveChanges(part, pendingMeshes)}
-                allMeshes={availableMeshes}
-                assignedMeshes={config.meshMap}
-              />
+              <div className="space-y-6">
+                <PartDetailsForm
+                  part={{
+                    id: part,
+                    code: part,
+                    name: config.partDetails[part].name,
+                    description: config.partDetails[part].description,
+                    price: config.partDetails[part].price,
+                    isConfigurable: config.partDetails[part].isConfigurable,
+                    icon: config.partDetails[part].icon,
+                    meshNames: config.meshMap[part]
+                  }}
+                  onUpdate={(updatedPart) => handlePartUpdate(part, updatedPart)}
+                  onMeshSelect={(partId, meshName) => handleMeshSelect(partId, meshName)}
+                />
+                <PartManagement
+                  partId={part}
+                  partName={config.partDetails[part].name}
+                  description={config.partDetails[part].description}
+                  price={config.partDetails[part].price}
+                  selectedMeshes={config.meshMap[part]}
+                  onMeshSelect={handleMeshSelect}
+                  onSaveChanges={(pendingMeshes) => handleSaveChanges(part, pendingMeshes)}
+                  allMeshes={availableMeshes}
+                  assignedMeshes={config.meshMap}
+                />
+              </div>
             </div>
           )}
         </div>
