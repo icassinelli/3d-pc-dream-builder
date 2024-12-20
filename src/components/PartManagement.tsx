@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Eye, EyeOff, Save } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
-import MeshSelector from './MeshSelector';
 
 interface PartManagementProps {
   partId: string;
@@ -30,19 +29,15 @@ const PartManagement = ({
   const [hideMeshes, setHideMeshes] = useState(false);
   const [pendingSelections, setPendingSelections] = useState<string[]>([...selectedMeshes]);
 
-  // Calculate available meshes by excluding those assigned to other parts
   const getAvailableMeshes = () => {
-    // Start with all meshes
     const availableMeshes = new Set(allMeshes);
     
-    // Remove meshes that are assigned to other parts
     Object.entries(assignedMeshes).forEach(([currentPartId, meshes]) => {
       if (currentPartId !== partId) {
         meshes.forEach(mesh => availableMeshes.delete(mesh));
       }
     });
 
-    // Include meshes that are pending or selected for this part
     pendingSelections.forEach(mesh => availableMeshes.add(mesh));
     selectedMeshes.forEach(mesh => availableMeshes.add(mesh));
 
@@ -65,7 +60,6 @@ const PartManagement = ({
       if (prev.includes(meshName)) {
         return prev.filter(m => m !== meshName);
       } else {
-        // Check if mesh is assigned to another part
         for (const [currentPartId, meshes] of Object.entries(assignedMeshes)) {
           if (currentPartId !== partId && meshes.includes(meshName)) {
             toast({
@@ -117,16 +111,6 @@ const PartManagement = ({
           </Button>
           <span className="text-gaming-accent">${price}</span>
         </div>
-      </div>
-
-      <div className="relative">
-        <MeshSelector
-          selectedMeshes={selectedMeshes}
-          pendingSelections={pendingSelections}
-          onMeshSelect={handleMeshSelect}
-          visibleMeshes={getAvailableMeshes()}
-          hideMeshes={hideMeshes}
-        />
       </div>
 
       <Button 
