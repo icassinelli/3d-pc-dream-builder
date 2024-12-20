@@ -4,7 +4,6 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { toast } from '@/hooks/use-toast';
-import { setupMeshMaterials, handleMeshIntersection } from '@/utils/meshUtils';
 import LoadingOverlay from './LoadingOverlay';
 
 interface MeshSelectorProps {
@@ -63,7 +62,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.PAN
+      RIGHT: THREE.MOUSE.NONE  // Disable right-click pan
     };
     controlsRef.current = controls;
 
@@ -114,14 +113,16 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     // Right-click handler for mesh selection
     const handleContextMenu = (event: MouseEvent) => {
       event.preventDefault();
-      if (cameraRef.current && meshesRef.current) {
-        handleMeshIntersection(
-          event,
-          raycasterRef.current,
-          cameraRef.current,
-          meshesRef.current,
-          onMeshSelect
-        );
+      
+      const rect = renderer.domElement.getBoundingClientRect();
+      const x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      const y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      
+      raycasterRef.current.setFromCamera(new THREE.Vector2(x, y), camera);
+      const intersects = raycasterRef.current.intersectObjects(Object.values(meshesRef.current), false);
+      
+      if (intersects.length > 0 && intersects[0].object instanceof THREE.Mesh) {
+        onMeshSelect(intersects[0].object.name);
       }
     };
 
@@ -159,7 +160,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     };
   }, [onMeshSelect, selectedMeshes]);
 
-  // Update mesh visibility and colors
+  // Update mesh visibility and materials
   useEffect(() => {
     Object.entries(meshesRef.current).forEach(([name, mesh]) => {
       const isSelected = selectedMeshes.includes(name);
@@ -167,6 +168,13 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
       setupMeshMaterials(mesh, isSelected);
     });
   }, [selectedMeshes, hideMeshes]);
+
+  const setupMeshMaterials = (mesh: THREE.Mesh, isSelected: boolean) => {
+    const material = new THREE.MeshPhongMaterial({
+      color: isSelected ? 0x00A3FF : 0xCCCCCC,
+    });
+    mesh.material = material;
+  };
 
   return (
     <div ref={mountRef} className="w-full h-[400px] relative rounded-lg overflow-hidden">
