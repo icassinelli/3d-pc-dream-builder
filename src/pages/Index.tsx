@@ -5,9 +5,12 @@ import ComponentSidebar from '@/components/ComponentSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ConfigData } from '@/types/config';
 import { MeshVisibilityProvider } from '@/contexts/MeshVisibilityContext';
+import { components } from '@/data/components';
 
 const Index = () => {
-  const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
+  const [selectedComponents, setSelectedComponents] = useState<Set<string>>(() => 
+    new Set(components.map(comp => comp.id))
+  );
   const [visibleParts, setVisibleParts] = useState<string[]>([]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
@@ -16,6 +19,7 @@ const Index = () => {
     partDetails: {}
   });
 
+  // Load config on mount
   useEffect(() => {
     const savedConfig = localStorage.getItem('pcConfig');
     if (savedConfig) {
@@ -29,17 +33,7 @@ const Index = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.shiftKey && event.key.toLowerCase() === 'a') {
-        navigate('/admin');
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [navigate]);
-
+  // Update visible meshes when selected components or config changes
   useEffect(() => {
     console.log('Selected components changed:', Array.from(selectedComponents));
     
@@ -65,6 +59,17 @@ const Index = () => {
       return newSet;
     });
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.shiftKey && event.key.toLowerCase() === 'a') {
+        navigate('/admin');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [navigate]);
 
   return (
     <MeshVisibilityProvider>

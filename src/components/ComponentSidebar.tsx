@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
@@ -22,25 +22,8 @@ const ComponentSidebar = ({
   const [isCapturing, setIsCapturing] = useState(false);
   const { toast } = useToast();
 
-  // Initialize all components as selected by default
-  useEffect(() => {
-    if (selectedComponents.size === 0) {
-      const allComponents = new Set(components.map(comp => comp.id));
-      setSelectedComponents(allComponents);
-      // Trigger visibility for all components
-      components.forEach(comp => onComponentToggle(comp.id));
-    }
-  }, [selectedComponents, setSelectedComponents, onComponentToggle]);
-
   const toggleComponent = (component: Component) => {
     console.log('Toggling component:', component.id);
-    const newSelected = new Set(selectedComponents);
-    if (newSelected.has(component.id)) {
-      newSelected.delete(component.id);
-    } else {
-      newSelected.add(component.id);
-    }
-    setSelectedComponents(newSelected);
     onComponentToggle(component.id);
   };
 
