@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Camera, RotateCcw } from 'lucide-react';
+import { Camera, RotateCcw, Settings2 } from 'lucide-react';
 import PartDetailsForm from './PartDetailsForm';
 import ConfigurationPanel from './ConfigurationPanel';
 import JsonConfigPanel from './JsonConfigPanel';
 import { ConfigData } from '@/types/config';
+import { Button } from './ui/button';
 
 interface PCPartsAdminProps {
   availableMeshes: string[];
@@ -63,6 +64,7 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   const [jsonConfig, setJsonConfig] = useState(JSON.stringify(config, null, 2));
   const [currentPart, setCurrentPart] = useState<string>("Monitor");
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [showAdvancedTools, setShowAdvancedTools] = useState(false);
 
   const handleMeshSelect = (meshName: string) => {
     setSelectedMeshes(prev => {
@@ -91,23 +93,6 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   return (
     <div className="space-y-6 p-6 bg-gaming-background text-gaming-text">
       <div className="space-y-3">
-        {/* Configuration Panel Section */}
-        <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
-          <div 
-            className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
-            onClick={() => toggleSection('configuration')}
-          >
-            <div className="flex justify-between items-center">
-              <span>Configuration Panel</span>
-            </div>
-          </div>
-          {expandedSection === 'configuration' && (
-            <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
-              <ConfigurationPanel visibleParts={Object.values(config.meshMap).flat()} />
-            </div>
-          )}
-        </div>
-
         {/* Part Configuration Sections */}
         {Object.keys(config.meshMap).map((part) => (
           <div key={part} className="bg-[#1A1F2C] rounded-lg overflow-hidden">
@@ -158,26 +143,58 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
           </div>
         ))}
 
-        {/* JSON Configuration Section */}
-        <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
-          <div 
-            className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
-            onClick={() => toggleSection('json')}
-          >
-            <div className="flex justify-between items-center">
-              <span>JSON Configuration</span>
+        {/* Advanced Tools Button */}
+        <Button
+          variant="outline"
+          className="w-full mt-4 bg-[#1A1F2C] border-gaming-accent/30 text-gaming-accent hover:bg-[#1F242F] hover:border-gaming-accent/50"
+          onClick={() => setShowAdvancedTools(!showAdvancedTools)}
+        >
+          <Settings2 className="w-4 h-4 mr-2" />
+          Advanced Tools
+        </Button>
+
+        {/* Advanced Tools Section */}
+        {showAdvancedTools && (
+          <div className="space-y-3 animate-part-in">
+            {/* Configuration Panel Section */}
+            <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
+              <div 
+                className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
+                onClick={() => toggleSection('configuration')}
+              >
+                <div className="flex justify-between items-center">
+                  <span>Configuration Panel</span>
+                </div>
+              </div>
+              {expandedSection === 'configuration' && (
+                <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
+                  <ConfigurationPanel visibleParts={Object.values(config.meshMap).flat()} />
+                </div>
+              )}
+            </div>
+
+            {/* JSON Configuration Section */}
+            <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
+              <div 
+                className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
+                onClick={() => toggleSection('json')}
+              >
+                <div className="flex justify-between items-center">
+                  <span>JSON Configuration</span>
+                </div>
+              </div>
+              {expandedSection === 'json' && (
+                <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
+                  <JsonConfigPanel 
+                    jsonConfig={jsonConfig}
+                    setJsonConfig={setJsonConfig}
+                    setConfig={setConfig}
+                  />
+                </div>
+              )}
             </div>
           </div>
-          {expandedSection === 'json' && (
-            <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
-              <JsonConfigPanel 
-                jsonConfig={jsonConfig}
-                setJsonConfig={setJsonConfig}
-                setConfig={setConfig}
-              />
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );
