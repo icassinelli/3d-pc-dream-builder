@@ -30,16 +30,34 @@ const PartManagement = ({
   const [hideMeshes, setHideMeshes] = useState(false);
   const [pendingSelections, setPendingSelections] = useState<string[]>([...selectedMeshes]);
 
-  // Get meshes that are available for this part (not assigned to other parts)
+  // Calculate available meshes by excluding those assigned to other parts
   const getAvailableMeshes = () => {
-    const assignedToOtherParts = new Set<string>();
+    // Start with all meshes
+    const availableMeshes = new Set(allMeshes);
+    
+    // Remove meshes that are assigned to other parts
     Object.entries(assignedMeshes).forEach(([currentPartId, meshes]) => {
       if (currentPartId !== partId) {
-        meshes.forEach(mesh => assignedToOtherParts.add(mesh));
+        meshes.forEach(mesh => availableMeshes.delete(mesh));
       }
     });
 
-    return allMeshes.filter(mesh => !assignedToOtherParts.has(mesh));
+    // Include meshes that are pending or selected for this part
+    pendingSelections.forEach(mesh => availableMeshes.add(mesh));
+    selectedMeshes.forEach(mesh => availableMeshes.add(mesh));
+
+    console.log('Available meshes calculation:', {
+      allMeshes,
+      assignedToOthers: Object.entries(assignedMeshes)
+        .filter(([id]) => id !== partId)
+        .map(([_, meshes]) => meshes)
+        .flat(),
+      pendingSelections,
+      selectedMeshes,
+      result: Array.from(availableMeshes)
+    });
+
+    return Array.from(availableMeshes);
   };
 
   const handleMeshSelect = (meshName: string) => {
