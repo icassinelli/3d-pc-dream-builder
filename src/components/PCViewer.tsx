@@ -4,6 +4,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { toast } from '@/hooks/use-toast';
+import { PCModel } from './Scene/PCModel';
 
 interface PCViewerProps {
   visibleParts: string[];
@@ -16,21 +17,17 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
   const cameraRef = useRef<THREE.PerspectiveCamera>();
   const controlsRef = useRef<OrbitControls>();
   const rendererRef = useRef<THREE.WebGLRenderer>();
-  const modelPartsRef = useRef<{ [key: string]: THREE.Object3D }>({});
   const animationFrameId = useRef<number>();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // Only set up scene if it hasn't been created yet
     if (!sceneRef.current) {
-      // Scene setup
       const scene = new THREE.Scene();
       scene.background = new THREE.Color('#1a1a1a');
       sceneRef.current = scene;
 
-      // Camera setup
       const camera = new THREE.PerspectiveCamera(
         50,
         mountRef.current.clientWidth / mountRef.current.clientHeight,
@@ -40,11 +37,10 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
       camera.position.set(5, 5, 5);
       cameraRef.current = camera;
 
-      // Renderer setup with preserveDrawingBuffer enabled
       const renderer = new THREE.WebGLRenderer({ 
         antialias: true,
         alpha: true,
-        preserveDrawingBuffer: true // Enable this for screenshots
+        preserveDrawingBuffer: true
       });
       renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
@@ -53,7 +49,6 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
       mountRef.current.appendChild(renderer.domElement);
       rendererRef.current = renderer;
 
-      // Controls setup
       const controls = new OrbitControls(camera, renderer.domElement);
       controls.enableDamping = true;
       controls.dampingFactor = 0.05;
@@ -61,7 +56,6 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
       controls.maxDistance = 10;
       controlsRef.current = controls;
 
-      // Lighting
       const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
       scene.add(ambientLight);
 
@@ -72,7 +66,6 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
       directionalLight.shadow.mapSize.height = 2048;
       scene.add(directionalLight);
 
-      // Load model
       const loader = new GLTFLoader();
       const dracoLoader = new DRACOLoader();
       dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
@@ -85,18 +78,15 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
         '/PC.glb',
         (gltf) => {
           console.log('Model loaded successfully!');
-          // Center the model
           const box = new THREE.Box3().setFromObject(gltf.scene);
           const center = box.getCenter(new THREE.Vector3());
           gltf.scene.position.sub(center);
           
           const meshNames: string[] = [];
           
-          // Log all mesh names for debugging
           gltf.scene.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               console.log('Found mesh:', child.name);
-              modelPartsRef.current[child.name] = child;
               meshNames.push(child.name);
               child.castShadow = true;
               child.receiveShadow = true;
@@ -106,7 +96,6 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
           scene.add(gltf.scene);
           setIsLoading(false);
           
-          // Notify parent component about available meshes
           if (onMeshesLoaded) {
             onMeshesLoaded(meshNames);
           }
@@ -145,7 +134,6 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
 
     window.addEventListener('resize', handleResize);
 
-    // Animation loop
     const animate = () => {
       animationFrameId.current = requestAnimationFrame(animate);
       if (controlsRef.current) {
@@ -157,7 +145,6 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
     };
     animate();
 
-    // Cleanup
     return () => {
       window.removeEventListener('resize', handleResize);
       if (animationFrameId.current) {
@@ -171,29 +158,11 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
         controlsRef.current.dispose();
       }
     };
-
-  }, []); // Empty dependency array since we only want to set up once
-
-  useEffect(() => {
-    if (!modelPartsRef.current) return;
-
-    // Log for debugging
-    console.log('Updating mesh visibility:', {
-      availableMeshes: Object.keys(modelPartsRef.current),
-      visibleParts
-    });
-
-    Object.entries(modelPartsRef.current).forEach(([name, object]) => {
-      const shouldBeVisible = visibleParts.includes(name);
-      if (object.visible !== shouldBeVisible) {
-        object.visible = shouldBeVisible;
-        console.log(`Setting visibility of ${name} to ${shouldBeVisible}`);
-      }
-    });
-  }, [visibleParts]);
+  }, []);
 
   return (
     <div ref={mountRef} className="w-full h-full relative">
+      {sceneRef.current && <PCModel scene={sceneRef.current} visibleParts={visibleParts} />}
       {isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-gaming-background/50">
           <div className="text-gaming-text">Loading 3D Model...</div>

@@ -4,6 +4,7 @@ import PCViewer from '@/components/PCViewer';
 import ComponentSidebar from '@/components/ComponentSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ConfigData } from '@/types/config';
+import { MeshVisibilityProvider } from '@/contexts/MeshVisibilityContext';
 
 const Index = () => {
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
@@ -16,7 +17,6 @@ const Index = () => {
   });
 
   useEffect(() => {
-    // Load config from localStorage
     const savedConfig = localStorage.getItem('pcConfig');
     if (savedConfig) {
       try {
@@ -40,11 +40,9 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
-  // Update visible parts whenever selected components change
   useEffect(() => {
     console.log('Selected components changed:', Array.from(selectedComponents));
     
-    // Get all mesh names for selected components
     const visibleMeshes = Array.from(selectedComponents).reduce<string[]>((meshes, componentId) => {
       const componentMeshes = config.meshMap[componentId] || [];
       console.log(`Meshes for ${componentId}:`, componentMeshes);
@@ -57,19 +55,30 @@ const Index = () => {
 
   const handleComponentToggle = (componentId: string) => {
     console.log('Component toggled:', componentId);
+    setSelectedComponents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(componentId)) {
+        newSet.delete(componentId);
+      } else {
+        newSet.add(componentId);
+      }
+      return newSet;
+    });
   };
 
   return (
-    <div className={`bg-gaming-background ${isMobile ? 'flex flex-col' : 'flex'}`}>
-      <div className={`${isMobile ? 'h-[60vh]' : 'flex-1'} relative`}>
-        <PCViewer visibleParts={visibleParts} />
+    <MeshVisibilityProvider>
+      <div className={`bg-gaming-background ${isMobile ? 'flex flex-col' : 'flex'}`}>
+        <div className={`${isMobile ? 'h-[60vh]' : 'flex-1'} relative`}>
+          <PCViewer visibleParts={visibleParts} />
+        </div>
+        <ComponentSidebar
+          onComponentToggle={handleComponentToggle}
+          selectedComponents={selectedComponents}
+          setSelectedComponents={setSelectedComponents}
+        />
       </div>
-      <ComponentSidebar
-        onComponentToggle={handleComponentToggle}
-        selectedComponents={selectedComponents}
-        setSelectedComponents={setSelectedComponents}
-      />
-    </div>
+    </MeshVisibilityProvider>
   );
 };
 
