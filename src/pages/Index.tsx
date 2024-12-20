@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PCViewer from '@/components/PCViewer';
 import ComponentSidebar from '@/components/ComponentSidebar';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const Index = () => {
   const [visibleParts, setVisibleParts] = useState<string[]>([]);
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
   const [availableMeshes, setAvailableMeshes] = useState<string[]>([]);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // Load the configuration from localStorage or use default
   useEffect(() => {
@@ -63,8 +65,8 @@ const Index = () => {
   };
 
   return (
-    <div className="flex h-screen bg-gaming-background">
-      <div className="flex-1 relative">
+    <div className={`bg-gaming-background ${isMobile ? 'flex flex-col' : 'flex'}`}>
+      <div className={`${isMobile ? 'h-[60vh]' : 'flex-1'} relative`}>
         <PCViewer 
           visibleParts={visibleParts} 
           onMeshesLoaded={setAvailableMeshes}
