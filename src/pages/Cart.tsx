@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ShoppingCart, ArrowRight, CreditCard } from 'lucide-react';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { ShoppingCart, ArrowLeft, CreditCard } from 'lucide-react';
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
@@ -39,12 +39,16 @@ const Cart = () => {
 
   if (!cartData) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center">
-          <ShoppingCart className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
-          <p className="text-gray-600 mb-4">Add some awesome PC components to get started!</p>
-          <Button onClick={() => navigate('/')}>
+      <div className="min-h-screen bg-gaming-background text-gaming-text p-8">
+        <div className="max-w-4xl mx-auto text-center">
+          <ShoppingCart className="mx-auto h-12 w-12 text-gaming-accent mb-4" />
+          <h2 className="text-2xl font-bold mb-2">Your cart is empty</h2>
+          <p className="text-gaming-text/70 mb-4">Add some awesome PC components to get started!</p>
+          <Button 
+            onClick={() => navigate('/')}
+            className="bg-gaming-accent hover:bg-gaming-accent/90"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Continue Shopping
           </Button>
         </div>
@@ -53,71 +57,71 @@ const Cart = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="max-w-4xl mx-auto">
-        <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
-          <ShoppingCart className="h-8 w-8" />
-          Your Cart
-        </h1>
+    <div className="min-h-screen bg-gaming-background text-gaming-text p-8">
+      <div className="max-w-6xl mx-auto">
+        <div className="flex items-center gap-2 mb-8">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/')}
+            className="text-gaming-text hover:text-gaming-accent"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Builder
+          </Button>
+          <h1 className="text-3xl font-bold">Your Cart</h1>
+        </div>
 
-        <div className="grid md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Custom PC Build</CardTitle>
-              </CardHeader>
-              <CardContent>
+        <div className="grid lg:grid-cols-3 gap-8">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="bg-gaming-muted border-gaming-accent/20 p-6">
+              <h2 className="text-xl font-bold mb-4">Your Custom PC Build</h2>
+              {cartData.screenshot && (
                 <img 
                   src={cartData.screenshot} 
                   alt="Custom PC Build" 
-                  className="w-full rounded-lg mb-4"
+                  className="w-full rounded-lg mb-6 border border-gaming-accent/20"
                 />
-                <div className="space-y-2">
-                  {cartData.components.map((component) => (
-                    <div key={component.id} className="flex justify-between items-center py-2 border-b">
-                      <div>
-                        <h3 className="font-medium">{component.name}</h3>
-                        <p className="text-sm text-gray-600">{component.description}</p>
-                      </div>
-                      <span className="font-medium">${component.price.toFixed(2)}</span>
+              )}
+              <div className="space-y-4">
+                {cartData.components.map((component) => (
+                  <div key={component.id} className="flex justify-between items-center py-3 border-b border-gaming-accent/20">
+                    <div>
+                      <h3 className="font-medium">{component.name}</h3>
+                      <p className="text-sm text-gaming-text/70">{component.description}</p>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
+                    <span className="font-medium text-gaming-accent">
+                      ${component.price.toFixed(2)}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </Card>
           </div>
 
-          <div className="md:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Order Summary</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Subtotal</span>
-                    <span>${cartData.totalPrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Shipping</span>
-                    <span>Free</span>
-                  </div>
-                  <div className="flex justify-between font-bold pt-2 border-t">
-                    <span>Total</span>
-                    <span>${cartData.totalPrice.toFixed(2)}</span>
-                  </div>
+          <div>
+            <Card className="bg-gaming-muted border-gaming-accent/20 p-6 sticky top-8">
+              <h2 className="text-xl font-bold mb-4">Order Summary</h2>
+              <div className="space-y-3">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gaming-text/70">Subtotal</span>
+                  <span>${cartData.totalPrice.toFixed(2)}</span>
                 </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full flex items-center justify-center gap-2" 
-                  onClick={handleCheckout}
-                >
-                  <CreditCard className="h-4 w-4" />
-                  Checkout
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </CardFooter>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gaming-text/70">Shipping</span>
+                  <span>Free</span>
+                </div>
+                <div className="flex justify-between font-bold pt-3 border-t border-gaming-accent/20">
+                  <span>Total</span>
+                  <span className="text-gaming-accent">${cartData.totalPrice.toFixed(2)}</span>
+                </div>
+              </div>
+              <Button 
+                className="w-full mt-6 bg-gaming-accent hover:bg-gaming-accent/90 flex items-center justify-center gap-2" 
+                onClick={handleCheckout}
+              >
+                <CreditCard className="h-4 w-4" />
+                Checkout
+              </Button>
             </Card>
           </div>
         </div>

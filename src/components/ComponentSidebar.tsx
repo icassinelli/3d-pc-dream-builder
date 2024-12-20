@@ -58,7 +58,15 @@ const ComponentSidebar = ({
         throw new Error('Scene element not found');
       }
       
-      const canvas = await html2canvas(sceneElement);
+      // Wait for any animations to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const canvas = await html2canvas(sceneElement, {
+        useCORS: true,
+        backgroundColor: '#1a1a1a',
+        scale: 2, // Increase quality
+      });
+      
       const image = canvas.toDataURL('image/png');
       
       const cartData = {
@@ -68,6 +76,7 @@ const ComponentSidebar = ({
         ),
         totalPrice,
       };
+      
       localStorage.setItem('pcCart', JSON.stringify(cartData));
       
       toast({
