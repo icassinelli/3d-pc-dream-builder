@@ -40,10 +40,8 @@ const Index = () => {
       }
     };
 
-    // Load initial config
     loadConfig();
 
-    // Listen for storage events
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'pcConfig' && event.newValue !== null) {
         loadConfig();
@@ -56,7 +54,7 @@ const Index = () => {
 
     window.addEventListener('storage', handleStorageChange);
     return () => window.removeEventListener('storage', handleStorageChange);
-  }, []); // Remove selectedComponents from dependency array
+  }, []);
 
   // Update visible parts when selected components or config changes
   useEffect(() => {
@@ -64,14 +62,21 @@ const Index = () => {
     console.log('Current config:', config);
     
     const newVisibleParts = Array.from(selectedComponents).reduce<string[]>((meshes, componentId) => {
-      const componentMeshes = config.meshMap[componentId] || [];
-      console.log(`Component ${componentId} meshes:`, componentMeshes);
+      // Convert component ID to match the config keys (capitalize first letter)
+      const configKey = componentId.charAt(0).toUpperCase() + componentId.slice(1);
+      const componentMeshes = config.meshMap[configKey] || [];
+      console.log(`Component ${componentId} (${configKey}) meshes:`, componentMeshes);
       return [...meshes, ...componentMeshes];
     }, []);
+
+    // Always include non-configurable parts
+    if (config.meshMap.NonConfigurable) {
+      newVisibleParts.push(...config.meshMap.NonConfigurable);
+    }
     
     console.log('New visible parts:', newVisibleParts);
     setVisibleParts(newVisibleParts);
-  }, [selectedComponents, config]); // Add config to dependency array
+  }, [selectedComponents, config]);
 
   const handleComponentToggle = (componentId: string) => {
     console.log('Toggling component:', componentId);
