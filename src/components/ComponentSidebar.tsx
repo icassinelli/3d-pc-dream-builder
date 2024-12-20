@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from 'html2canvas';
@@ -18,6 +19,7 @@ const ComponentSidebar = ({
   setSelectedComponents,
 }: ComponentSidebarProps) => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [isCapturing, setIsCapturing] = useState(false);
 
   // Initialize all components as selected by default
@@ -72,6 +74,8 @@ const ComponentSidebar = ({
         title: "Added to Cart!",
         description: `Your custom PC setup with ${selectedCount} components has been saved.`,
       });
+      
+      navigate('/cart');
     } catch (error) {
       console.error('Capture error:', error);
       toast({
