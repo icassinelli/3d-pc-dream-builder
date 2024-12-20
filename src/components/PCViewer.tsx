@@ -40,10 +40,11 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
       camera.position.set(5, 5, 5);
       cameraRef.current = camera;
 
-      // Renderer setup
+      // Renderer setup with preserveDrawingBuffer enabled
       const renderer = new THREE.WebGLRenderer({ 
         antialias: true,
         alpha: true,
+        preserveDrawingBuffer: true // Enable this for screenshots
       });
       renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
       renderer.setPixelRatio(window.devicePixelRatio);
@@ -71,13 +72,11 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
       directionalLight.shadow.mapSize.height = 2048;
       scene.add(directionalLight);
 
-      // Set up Draco loader
+      // Load model
+      const loader = new GLTFLoader();
       const dracoLoader = new DRACOLoader();
       dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
       dracoLoader.preload();
-
-      // Load model
-      const loader = new GLTFLoader();
       loader.setDRACOLoader(dracoLoader);
       
       console.log('Loading model...');
@@ -128,7 +127,6 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
       );
     }
 
-    // Handle window resize
     const handleResize = () => {
       if (!mountRef.current) return;
       
@@ -173,9 +171,9 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
         controlsRef.current.dispose();
       }
     };
+
   }, []); // Empty dependency array since we only want to set up once
 
-  // Update part visibility whenever visibleParts changes
   useEffect(() => {
     if (!modelPartsRef.current) return;
 

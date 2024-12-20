@@ -52,18 +52,19 @@ const ComponentSidebar = ({
   const captureScene = async () => {
     setIsCapturing(true);
     try {
-      const sceneElement = document.querySelector('.w-full.h-full.relative') as HTMLElement;
+      // Wait a bit for any pending renders
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const sceneElement = document.querySelector('.aspect-video.relative') as HTMLElement;
       if (!sceneElement) {
         throw new Error('Scene element not found');
       }
-      
-      // Wait for any animations to complete
-      await new Promise(resolve => setTimeout(resolve, 100));
       
       const canvas = await html2canvas(sceneElement, {
         useCORS: true,
         backgroundColor: '#1a1a1a',
         scale: 2, // Increase quality
+        logging: true, // Enable logging for debugging
       });
       
       const image = canvas.toDataURL('image/png');
@@ -80,6 +81,11 @@ const ComponentSidebar = ({
       navigate('/cart');
     } catch (error) {
       console.error('Capture error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to capture scene. Please try again.",
+        variant: "destructive",
+      });
     }
     setIsCapturing(false);
   };
