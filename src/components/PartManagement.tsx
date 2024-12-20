@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeOff, Save } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/hooks/use-toast';
 
@@ -75,10 +75,6 @@ const PartManagement = ({
     });
   };
 
-  const handleSaveChanges = () => {
-    onSaveChanges(pendingSelections);
-  };
-
   const toggleMeshVisibility = () => {
     setHideMeshes(!hideMeshes);
     toast({
@@ -112,15 +108,6 @@ const PartManagement = ({
           <span className="text-gaming-accent">${price}</span>
         </div>
       </div>
-
-      <Button 
-        onClick={handleSaveChanges}
-        className="w-full bg-gaming-accent hover:bg-gaming-accent/80"
-        disabled={pendingSelections.length === selectedMeshes.length}
-      >
-        <Save className="w-4 h-4 mr-2" />
-        Save Changes
-      </Button>
     </div>
   );
 };
