@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Camera, RotateCcw, Settings2 } from 'lucide-react';
-import PartDetailsForm from './PartDetailsForm';
+import { Settings2 } from 'lucide-react';
 import ConfigurationPanel from './ConfigurationPanel';
 import JsonConfigPanel from './JsonConfigPanel';
 import { ConfigData } from '@/types/config';
 import { Button } from './ui/button';
+import PartManagement from './PartManagement';
+import { toast } from '@/hooks/use-toast';
 
 interface PCPartsAdminProps {
   availableMeshes: string[];
@@ -66,23 +67,28 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [showAdvancedTools, setShowAdvancedTools] = useState(false);
 
-  const handleMeshSelect = (meshName: string) => {
+  const handleMeshSelect = (partId: string, meshName: string) => {
     setSelectedMeshes(prev => {
       const newSelection = prev.includes(meshName) 
         ? prev.filter(name => name !== meshName)
         : [...prev, meshName];
-      
-      const newConfig = {
-        ...config,
-        meshMap: {
-          ...config.meshMap,
-          [currentPart]: newSelection
-        }
-      };
-      setConfig(newConfig);
-      setJsonConfig(JSON.stringify(newConfig, null, 2));
-      
       return newSelection;
+    });
+  };
+
+  const handleSaveChanges = (partId: string) => {
+    const newConfig = {
+      ...config,
+      meshMap: {
+        ...config.meshMap,
+        [partId]: selectedMeshes
+      }
+    };
+    setConfig(newConfig);
+    setJsonConfig(JSON.stringify(newConfig, null, 2));
+    toast({
+      title: "Success",
+      description: "Mesh selections saved successfully",
     });
   };
 
@@ -101,42 +107,27 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
               onClick={() => toggleSection(part)}
             >
               <div className="flex justify-between items-center">
-                <span>{config.partDetails[part].name}</span>
-                <span className="text-gaming-accent">${config.partDetails[part].price}</span>
+                <div className="flex items-center gap-2">
+                  <span>{config.partDetails[part].name}</span>
+                  <span className="text-sm text-gray-500">
+                    {config.meshMap[part].length} meshes
+                  </span>
+                </div>
+                <span className="text-gaming-accent">
+                  ${config.partDetails[part].price}
+                </span>
               </div>
             </div>
             {expandedSection === part && (
               <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
-                <PartDetailsForm
-                  part={{
-                    id: part,
-                    code: part,
-                    name: config.partDetails[part].name,
-                    description: config.partDetails[part].description,
-                    price: config.partDetails[part].price,
-                    isConfigurable: config.partDetails[part].isConfigurable,
-                    meshNames: config.meshMap[part]
-                  }}
-                  onUpdate={(updatedPart) => {
-                    const newConfig = {
-                      ...config,
-                      partDetails: {
-                        ...config.partDetails,
-                        [part]: {
-                          name: updatedPart.name,
-                          description: updatedPart.description,
-                          price: updatedPart.price,
-                          isConfigurable: updatedPart.isConfigurable
-                        }
-                      }
-                    };
-                    setConfig(newConfig);
-                    setJsonConfig(JSON.stringify(newConfig, null, 2));
-                  }}
-                  onMeshSelect={(partId, meshName) => {
-                    setCurrentPart(partId);
-                    handleMeshSelect(meshName);
-                  }}
+                <PartManagement
+                  partId={part}
+                  partName={config.partDetails[part].name}
+                  description={config.partDetails[part].description}
+                  price={config.partDetails[part].price}
+                  selectedMeshes={config.meshMap[part]}
+                  onMeshSelect={handleMeshSelect}
+                  onSaveChanges={() => handleSaveChanges(part)}
                 />
               </div>
             )}

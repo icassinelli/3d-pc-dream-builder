@@ -8,9 +8,10 @@ import { toast } from '@/hooks/use-toast';
 interface MeshSelectorProps {
   onMeshSelect: (meshName: string) => void;
   selectedMeshes: string[];
+  hideMeshes?: boolean;
 }
 
-const MeshSelector = ({ onMeshSelect, selectedMeshes }: MeshSelectorProps) => {
+const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: MeshSelectorProps) => {
   const mountRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
@@ -147,10 +148,12 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes }: MeshSelectorProps) => {
   useEffect(() => {
     Object.entries(meshesRef.current).forEach(([name, mesh]) => {
       if (mesh.material instanceof THREE.MeshPhongMaterial) {
-        mesh.material.color.setHex(selectedMeshes.includes(name) ? 0x00A3FF : 0xCCCCCC);
+        const isSelected = selectedMeshes.includes(name);
+        mesh.visible = hideMeshes ? !isSelected : true;
+        mesh.material.color.setHex(isSelected ? 0x00A3FF : 0xCCCCCC);
       }
     });
-  }, [selectedMeshes]);
+  }, [selectedMeshes, hideMeshes]);
 
   return (
     <div ref={mountRef} className="w-full h-[400px] relative rounded-lg overflow-hidden">
