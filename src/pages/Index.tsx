@@ -6,6 +6,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 const Index = () => {
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
+  const [visibleParts, setVisibleParts] = useState<string[]>([]);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -21,14 +22,14 @@ const Index = () => {
   }, [navigate]);
 
   const handleComponentToggle = (componentId: string) => {
-    // This function will be implemented later when we handle 3D model visibility
-    console.log('Component toggled:', componentId);
+    // For now, we'll just use the componentId as the part name
+    setVisibleParts(Array.from(selectedComponents));
   };
 
   return (
     <div className={`bg-gaming-background ${isMobile ? 'flex flex-col' : 'flex'}`}>
       <div className={`${isMobile ? 'h-[60vh]' : 'flex-1'} relative`}>
-        <PCViewer />
+        <PCViewer visibleParts={visibleParts} />
       </div>
       <ComponentSidebar
         onComponentToggle={handleComponentToggle}
