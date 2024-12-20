@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Plus, Eye, Settings, ChevronDown, ChevronUp } from 'lucide-react';
 import MeshSelector from '@/components/MeshSelector';
+import PCPartsAdmin from '@/components/PCPartsAdmin';
 
 interface Part {
   id: string;
@@ -32,6 +33,7 @@ const Admin = () => {
     },
   ]);
   const [expandedPartId, setExpandedPartId] = useState<string | null>(null);
+  const [isPartsAdminOpen, setIsPartsAdminOpen] = useState(false);
 
   const toggleExpand = (partId: string) => {
     setExpandedPartId(expandedPartId === partId ? null : partId);
@@ -173,11 +175,21 @@ const Admin = () => {
           <Button
             variant="outline"
             className="bg-transparent border-gaming-accent/30 text-gaming-accent hover:bg-gaming-accent/10"
+            onClick={() => setIsPartsAdminOpen(true)}
           >
             <Settings className="mr-2 h-4 w-4" />
             Advanced Tools
           </Button>
         </div>
+
+        <PCPartsAdmin
+          open={isPartsAdminOpen}
+          onOpenChange={setIsPartsAdminOpen}
+          availableMeshes={[
+            "Cube010", "Cube009", "Cube008", "Cube007", "Cube006",
+            "MY_SCREEN", "Cube001_Material055_0", "gigabyte-logo001_gigabyte-logo_0"
+          ]}
+        />
       </div>
     </div>
   );

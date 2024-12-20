@@ -25,98 +25,99 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes }: MeshSelectorProps) => {
   useEffect(() => {
     if (!mountRef.current) return;
 
-    if (!sceneRef.current) {
-      const scene = new THREE.Scene();
-      scene.background = new THREE.Color('#0A0A0A');
-      sceneRef.current = scene;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#0A0A0A');
+    sceneRef.current = scene;
 
-      const camera = new THREE.PerspectiveCamera(
-        50,
-        mountRef.current.clientWidth / mountRef.current.clientHeight,
-        0.1,
-        1000
-      );
-      camera.position.set(5, 5, 5);
-      cameraRef.current = camera;
+    const camera = new THREE.PerspectiveCamera(
+      50,
+      mountRef.current.clientWidth / mountRef.current.clientHeight,
+      0.1,
+      1000
+    );
+    camera.position.set(5, 5, 5);
+    cameraRef.current = camera;
 
-      const renderer = new THREE.WebGLRenderer({
-        antialias: true,
-      });
-      renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
-      renderer.setPixelRatio(window.devicePixelRatio);
-      renderer.shadowMap.enabled = true;
-      mountRef.current.appendChild(renderer.domElement);
-      rendererRef.current = renderer;
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+    });
+    renderer.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    mountRef.current.appendChild(renderer.domElement);
+    rendererRef.current = renderer;
 
-      const controls = new OrbitControls(camera, renderer.domElement);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.05;
-      controlsRef.current = controls;
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    controlsRef.current = controls;
 
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-      scene.add(ambientLight);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
 
-      const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-      directionalLight.position.set(5, 5, 5);
-      scene.add(directionalLight);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(5, 5, 5);
+    scene.add(directionalLight);
 
-      const dracoLoader = new DRACOLoader();
-      dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
-      dracoLoader.preload();
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    dracoLoader.preload();
 
-      const loader = new GLTFLoader();
-      loader.setDRACOLoader(dracoLoader);
+    const loader = new GLTFLoader();
+    loader.setDRACOLoader(dracoLoader);
 
-      loader.load(
-        '/PC.glb',
-        (gltf) => {
-          const box = new THREE.Box3().setFromObject(gltf.scene);
-          const center = box.getCenter(new THREE.Vector3());
-          gltf.scene.position.sub(center);
+    loader.load(
+      '/PC.glb',
+      (gltf) => {
+        const box = new THREE.Box3().setFromObject(gltf.scene);
+        const center = box.getCenter(new THREE.Vector3());
+        gltf.scene.position.sub(center);
 
-          gltf.scene.traverse((child) => {
-            if (child instanceof THREE.Mesh) {
-              meshesRef.current[child.name] = child;
-              child.material = new THREE.MeshPhongMaterial({
-                color: selectedMeshes.includes(child.name) ? 0x00A3FF : 0xCCCCCC,
-              });
-            }
-          });
-
-          scene.add(gltf.scene);
-          setIsLoading(false);
-        },
-        undefined,
-        (error) => {
-          console.error('Error loading model:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load 3D model",
-            variant: "destructive",
-          });
-        }
-      );
-
-      const handleClick = (event: MouseEvent) => {
-        if (!mountRef.current) return;
-
-        const rect = mountRef.current.getBoundingClientRect();
-        mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-        mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
-        if (cameraRef.current && sceneRef.current) {
-          raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
-          const intersects = raycasterRef.current.intersectObjects(Object.values(meshesRef.current), true);
-
-          if (intersects.length > 0) {
-            const mesh = intersects[0].object;
-            onMeshSelect(mesh.name);
+        gltf.scene.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            meshesRef.current[child.name] = child;
+            child.material = new THREE.MeshPhongMaterial({
+              color: selectedMeshes.includes(child.name) ? 0x00A3FF : 0xCCCCCC,
+            });
           }
-        }
-      };
+        });
 
-      mountRef.current.addEventListener('click', handleClick);
-    }
+        scene.add(gltf.scene);
+        setIsLoading(false);
+      },
+      undefined,
+      (error) => {
+        console.error('Error loading model:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load 3D model",
+          variant: "destructive",
+        });
+      }
+    );
+
+    const handleClick = (event: MouseEvent) => {
+      event.preventDefault(); // Prevent default behavior
+      event.stopPropagation(); // Stop event propagation
+      
+      if (!mountRef.current) return;
+
+      const rect = mountRef.current.getBoundingClientRect();
+      mouseRef.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      mouseRef.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+      if (cameraRef.current && sceneRef.current) {
+        raycasterRef.current.setFromCamera(mouseRef.current, cameraRef.current);
+        const intersects = raycasterRef.current.intersectObjects(Object.values(meshesRef.current), true);
+
+        if (intersects.length > 0) {
+          const mesh = intersects[0].object;
+          onMeshSelect(mesh.name);
+        }
+      }
+    };
+
+    mountRef.current.addEventListener('click', handleClick);
 
     const animate = () => {
       animationFrameId.current = requestAnimationFrame(animate);
@@ -130,6 +131,9 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes }: MeshSelectorProps) => {
     animate();
 
     return () => {
+      if (mountRef.current) {
+        mountRef.current.removeEventListener('click', handleClick);
+      }
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
