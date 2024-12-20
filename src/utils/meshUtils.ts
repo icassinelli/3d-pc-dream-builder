@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { SceneRefs } from '@/types/mesh';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 export const setupMeshMaterials = (mesh: THREE.Mesh, isSelected: boolean) => {
   const material = new THREE.MeshPhongMaterial({
@@ -73,3 +73,13 @@ export const initializeScene = (container: HTMLDivElement): SceneRefs => {
     raycaster: new THREE.Raycaster()
   };
 };
+
+export interface SceneRefs {
+  scene: THREE.Scene;
+  camera: THREE.PerspectiveCamera;
+  renderer: THREE.WebGLRenderer;
+  controls: OrbitControls;
+  meshes: { [key: string]: THREE.Mesh };
+  raycaster: THREE.Raycaster;
+  animationFrameId?: number;
+}
