@@ -142,7 +142,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes }: MeshSelectorProps) => {
 
   useEffect(() => {
     Object.entries(meshesRef.current).forEach(([name, mesh]) => {
-      if (mesh.material instanceof THREE.Material) {
+      if (mesh.material instanceof THREE.MeshPhongMaterial) {
         mesh.material.color.setHex(selectedMeshes.includes(name) ? 0x00A3FF : 0xCCCCCC);
       }
     });
