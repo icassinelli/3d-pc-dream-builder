@@ -1,115 +1,48 @@
-import { useState } from 'react';
-import { Settings2 } from 'lucide-react';
-import ConfigurationPanel from './ConfigurationPanel';
-import JsonConfigPanel from './JsonConfigPanel';
+import { useState, useEffect } from 'react';
 import { ConfigData } from '@/types/config';
-import { Button } from './ui/button';
-import PartManagement from './PartManagement';
-import { toast } from '@/hooks/use-toast';
+import PartList from './admin/PartList';
+import AdvancedTools from './admin/AdvancedTools';
+import { defaultConfig } from './admin/DefaultConfig';
 
 interface PCPartsAdminProps {
   availableMeshes: string[];
 }
 
 const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
-  const [selectedMeshes, setSelectedMeshes] = useState<string[]>([]);
-  const [config, setConfig] = useState<ConfigData>({
-    meshMap: {
-      "Monitor": [],
-      "PC": [],
-      "Keyboard": [],
-      "Mouse": [],
-      "Speakers": [],
-      "NonConfigurable": []
-    },
-    partDetails: {
-      "Monitor": {
-        name: '27" Gaming Monitor',
-        price: 299.99,
-        description: "1440p 165Hz Display",
-        isConfigurable: true
-      },
-      "PC": {
-        name: "Gaming Tower",
-        price: 1499.99,
-        description: "RTX 4070, i7, 32GB RAM",
-        isConfigurable: true
-      },
-      "Keyboard": {
-        name: "Mechanical Keyboard",
-        price: 149.99,
-        description: "RGB Mechanical Switches",
-        isConfigurable: true
-      },
-      "Mouse": {
-        name: "Gaming Mouse",
-        price: 79.99,
-        description: "16000 DPI Optical Sensor",
-        isConfigurable: true
-      },
-      "Speakers": {
-        name: "2.1 Speaker System",
-        price: 199.99,
-        description: "THX Certified Audio",
-        isConfigurable: true
-      },
-      "NonConfigurable": {
-        name: "Non-Configurable Items",
-        price: 0,
-        description: "Items that are always visible",
-        isConfigurable: false
+  const [config, setConfig] = useState<ConfigData>(() => {
+    const savedConfig = localStorage.getItem('pcConfig');
+    if (savedConfig) {
+      try {
+        return JSON.parse(savedConfig);
+      } catch (error) {
+        console.error('Failed to parse saved config:', error);
+        return defaultConfig;
       }
     }
+    return defaultConfig;
   });
   
-  const [jsonConfig, setJsonConfig] = useState(JSON.stringify(config, null, 2));
-  const [currentPart, setCurrentPart] = useState<string>("Monitor");
+  const [jsonConfig, setJsonConfig] = useState(() => JSON.stringify(config, null, 2));
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [showAdvancedTools, setShowAdvancedTools] = useState(false);
 
-  const handleMeshSelect = (partId: string, meshNames: string) => {
-    const meshArray = meshNames.split(',').filter(Boolean);
-    setConfig(prev => ({
-      ...prev,
-      meshMap: {
-        ...prev.meshMap,
-        [partId]: meshArray
+  // Listen for changes from other tabs
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'pcConfig' && e.newValue) {
+        try {
+          const newConfig = JSON.parse(e.newValue);
+          setConfig(newConfig);
+          setJsonConfig(JSON.stringify(newConfig, null, 2));
+        } catch (error) {
+          console.error('Failed to parse config from storage event:', error);
+        }
       }
-    }));
-  };
+    };
 
-  const handleSaveChanges = (partId: string, pendingMeshes: string[]) => {
-    // First, remove these meshes from all other parts
-    const updatedMeshMap = { ...config.meshMap };
-    
-    // Remove the pending meshes from all other parts
-    Object.keys(updatedMeshMap).forEach(part => {
-      if (part !== partId) {
-        updatedMeshMap[part] = updatedMeshMap[part].filter(
-          mesh => !pendingMeshes.includes(mesh)
-        );
-      }
-    });
-
-    // Assign the pending meshes to the current part
-    updatedMeshMap[partId] = pendingMeshes;
-
-    // Update the config state
-    setConfig(prev => ({
-      ...prev,
-      meshMap: updatedMeshMap
-    }));
-
-    // Update the JSON representation
-    setJsonConfig(JSON.stringify({ ...config, meshMap: updatedMeshMap }, null, 2));
-
-    toast({
-      title: "Changes Saved",
-      description: `Updated mesh assignments for ${config.partDetails[partId].name}`,
-    });
-
-    console.log('Updated meshMap:', updatedMeshMap);
-  };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
 
   const toggleSection = (section: string) => {
     setExpandedSection(expandedSection === section ? null : section);
@@ -118,87 +51,24 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   return (
     <div className="space-y-6 p-6 bg-gaming-background text-gaming-text">
       <div className="space-y-3">
-        {Object.keys(config.meshMap).map((part) => (
-          <div key={part} className="bg-[#1A1F2C] rounded-lg overflow-hidden">
-            <div 
-              className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
-              onClick={() => toggleSection(part)}
-            >
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-2">
-                  <span>{config.partDetails[part].name}</span>
-                  <span className="text-sm text-gray-500">
-                    {config.meshMap[part].length} meshes
-                  </span>
-                </div>
-                <span className="text-gaming-accent">
-                  ${config.partDetails[part].price}
-                </span>
-              </div>
-            </div>
-            {expandedSection === part && (
-              <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
-                <PartManagement
-                  partId={part}
-                  partName={config.partDetails[part].name}
-                  description={config.partDetails[part].description}
-                  price={config.partDetails[part].price}
-                  selectedMeshes={config.meshMap[part]}
-                  onMeshSelect={handleMeshSelect}
-                  onSaveChanges={(pendingMeshes) => handleSaveChanges(part, pendingMeshes)}
-                  allMeshes={availableMeshes}
-                  assignedMeshes={config.meshMap}
-                />
-              </div>
-            )}
-          </div>
-        ))}
-        <Button
-          variant="outline"
-          className="w-full mt-4 bg-[#1A1F2C] border-gaming-accent/30 text-gaming-accent hover:bg-[#1F242F] hover:border-gaming-accent/50"
-          onClick={() => setShowAdvancedTools(!showAdvancedTools)}
-        >
-          <Settings2 className="w-4 h-4 mr-2" />
-          Advanced Tools
-        </Button>
-        {showAdvancedTools && (
-          <div className="space-y-3 animate-part-in">
-            <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
-              <div 
-                className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
-                onClick={() => toggleSection('configuration')}
-              >
-                <div className="flex justify-between items-center">
-                  <span>Configuration Panel</span>
-                </div>
-              </div>
-              {expandedSection === 'configuration' && (
-                <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
-                  <ConfigurationPanel visibleParts={Object.values(config.meshMap).flat()} />
-                </div>
-              )}
-            </div>
-            <div className="bg-[#1A1F2C] rounded-lg overflow-hidden">
-              <div 
-                className="p-4 hover:bg-[#1F242F] transition-colors cursor-pointer"
-                onClick={() => toggleSection('json')}
-              >
-                <div className="flex justify-between items-center">
-                  <span>JSON Configuration</span>
-                </div>
-              </div>
-              {expandedSection === 'json' && (
-                <div className="p-4 border-t border-gaming-accent/10 animate-part-in">
-                  <JsonConfigPanel 
-                    jsonConfig={jsonConfig}
-                    setJsonConfig={setJsonConfig}
-                    setConfig={setConfig}
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <PartList
+          config={config}
+          setConfig={setConfig}
+          setJsonConfig={setJsonConfig}
+          expandedSection={expandedSection}
+          toggleSection={toggleSection}
+          availableMeshes={availableMeshes}
+        />
+        <AdvancedTools
+          showAdvancedTools={showAdvancedTools}
+          setShowAdvancedTools={setShowAdvancedTools}
+          expandedSection={expandedSection}
+          toggleSection={toggleSection}
+          config={config}
+          jsonConfig={jsonConfig}
+          setJsonConfig={setJsonConfig}
+          setConfig={setConfig}
+        />
       </div>
     </div>
   );
