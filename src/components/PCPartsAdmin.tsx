@@ -5,6 +5,7 @@ import { toast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
 import MeshSelector from './MeshSelector';
+import PCViewer from './PCViewer';
 
 interface PCPartsAdminProps {
   availableMeshes: string[];
@@ -118,9 +119,8 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
           <AccordionContent>
             <div className="space-y-4">
               <div className="aspect-video relative rounded-lg overflow-hidden bg-gaming-muted">
-                <MeshSelector
-                  selectedMeshes={[]}
-                  onMeshSelect={() => {}}
+                <PCViewer
+                  visibleParts={Object.values(config.meshMap).flat()}
                 />
                 <div className="absolute bottom-4 left-4 text-sm text-gaming-text/70">
                   Left click: Rotate • Right click: Pan • Scroll: Zoom
