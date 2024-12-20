@@ -62,8 +62,10 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     controls.mouseButtons = {
       LEFT: THREE.MOUSE.ROTATE,
       MIDDLE: THREE.MOUSE.DOLLY,
-      RIGHT: THREE.MOUSE.NONE  // Disable right-click pan
+      RIGHT: THREE.MOUSE.PAN  // Set to PAN but we'll prevent the context menu
     };
+    // Disable right-click context menu to prevent panning
+    renderer.domElement.addEventListener('contextmenu', (e) => e.preventDefault());
     controlsRef.current = controls;
 
     // Lighting
@@ -146,7 +148,6 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
     // Cleanup
     return () => {
       renderer.domElement.removeEventListener('contextmenu', handleContextMenu);
-      
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
@@ -158,7 +159,7 @@ const MeshSelector = ({ onMeshSelect, selectedMeshes, hideMeshes = false }: Mesh
         controlsRef.current.dispose();
       }
     };
-  }, [onMeshSelect, selectedMeshes]);
+  }, [onMeshSelect]);
 
   // Update mesh visibility and materials
   useEffect(() => {
