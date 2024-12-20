@@ -84,29 +84,24 @@ const PartManagement = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-400">{description}</p>
-          <p className="text-sm text-gray-500">
-            {selectedMeshes.length} assigned, {pendingSelections.length - selectedMeshes.length} pending
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={toggleMeshVisibility}
-            className="border-gaming-accent/30 text-gaming-accent hover:bg-gaming-accent/10"
-          >
-            {hideMeshes ? (
-              <EyeOff className="h-4 w-4" />
-            ) : (
-              <Eye className="h-4 w-4" />
-            )}
-          </Button>
-          <span className="text-gaming-accent">${price}</span>
-        </div>
+    <div className="grid grid-cols-3 gap-4">
+      <div className="col-span-2">
+        <p className="text-sm text-gray-400">{description}</p>
+      </div>
+      <div className="flex items-center justify-end gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={toggleMeshVisibility}
+          className="border-gaming-accent/30 text-gaming-accent hover:bg-gaming-accent/10"
+        >
+          {hideMeshes ? (
+            <EyeOff className="h-4 w-4" />
+          ) : (
+            <Eye className="h-4 w-4" />
+          )}
+        </Button>
+        <span className="text-gaming-accent">${price}</span>
       </div>
     </div>
   );
