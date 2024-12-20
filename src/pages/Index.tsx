@@ -9,6 +9,21 @@ const Index = () => {
   const [availableMeshes, setAvailableMeshes] = useState<string[]>([]);
   const navigate = useNavigate();
 
+  // Load the configuration from localStorage or use default
+  useEffect(() => {
+    const savedConfig = localStorage.getItem('pcConfig');
+    if (savedConfig) {
+      const config = JSON.parse(savedConfig);
+      // Show all meshes by default
+      const allMeshes = Object.values(config.meshMap).flat();
+      setVisibleParts(allMeshes);
+      // Mark all configurable components as selected
+      setSelectedComponents(new Set(Object.keys(config.meshMap).filter(
+        key => config.partDetails[key]?.isConfigurable
+      )));
+    }
+  }, []);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.shiftKey && event.key.toLowerCase() === 'a') {
@@ -20,22 +35,29 @@ const Index = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [navigate]);
 
-  const handleComponentToggle = (meshNames: string[]) => {
-    setVisibleParts((current) => {
-      const newParts = new Set(current);
-      meshNames.forEach(name => {
-        if (current.includes(name)) {
-          newParts.delete(name);
-        } else {
-          newParts.add(name);
-        }
-      });
-      return Array.from(newParts);
+  const handleComponentToggle = (componentName: string) => {
+    setSelectedComponents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(componentName)) {
+        newSet.delete(componentName);
+      } else {
+        newSet.add(componentName);
+      }
+      
+      // Update visible parts based on selected components
+      const savedConfig = localStorage.getItem('pcConfig');
+      if (savedConfig) {
+        const config = JSON.parse(savedConfig);
+        const newVisibleParts = Array.from(newSet).flatMap(
+          comp => config.meshMap[comp] || []
+        );
+        // Always show non-configurable parts
+        const nonConfigurableParts = config.meshMap.NonConfigurable || [];
+        setVisibleParts([...newVisibleParts, ...nonConfigurableParts]);
+      }
+      
+      return newSet;
     });
-  };
-
-  const handleMeshesLoaded = (meshNames: string[]) => {
-    setAvailableMeshes(meshNames);
   };
 
   return (
@@ -43,7 +65,7 @@ const Index = () => {
       <div className="flex-1 relative">
         <PCViewer 
           visibleParts={visibleParts} 
-          onMeshesLoaded={handleMeshesLoaded}
+          onMeshesLoaded={setAvailableMeshes}
         />
       </div>
       <ComponentSidebar

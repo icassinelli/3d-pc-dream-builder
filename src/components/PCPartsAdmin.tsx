@@ -24,6 +24,7 @@ interface ConfigData {
 }
 
 const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
+  const [selectedMeshes, setSelectedMeshes] = useState<string[]>([]);
   const [config, setConfig] = useState<ConfigData>({
     meshMap: {
       "Monitor": [],
@@ -74,12 +75,36 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   });
   
   const [jsonConfig, setJsonConfig] = useState(JSON.stringify(config, null, 2));
+  const [currentPart, setCurrentPart] = useState<string>("Monitor");
+
+  const handleMeshSelect = (meshName: string) => {
+    setSelectedMeshes(prev => {
+      const newSelection = prev.includes(meshName) 
+        ? prev.filter(name => name !== meshName)
+        : [...prev, meshName];
+      
+      // Update the config.meshMap for the current part
+      const newConfig = {
+        ...config,
+        meshMap: {
+          ...config.meshMap,
+          [currentPart]: newSelection
+        }
+      };
+      setConfig(newConfig);
+      setJsonConfig(JSON.stringify(newConfig, null, 2));
+      
+      return newSelection;
+    });
+  };
 
   const handleJsonUpdate = (newJson: string) => {
     try {
       const parsed = JSON.parse(newJson);
       setConfig(parsed);
       setJsonConfig(newJson);
+      // Update selected meshes based on current part
+      setSelectedMeshes(parsed.meshMap[currentPart] || []);
       toast({
         title: "Success",
         description: "Configuration updated successfully",
@@ -111,6 +136,22 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
 
   return (
     <div className="space-y-6 p-6 bg-gaming-background text-gaming-text">
+      <div className="flex gap-4 mb-4">
+        {Object.keys(config.meshMap).map((part) => (
+          <Button
+            key={part}
+            onClick={() => {
+              setCurrentPart(part);
+              setSelectedMeshes(config.meshMap[part] || []);
+            }}
+            variant={currentPart === part ? "default" : "outline"}
+            className={currentPart === part ? "bg-gaming-accent" : ""}
+          >
+            {part}
+          </Button>
+        ))}
+      </div>
+
       <Accordion type="single" collapsible className="w-full">
         <AccordionItem value="screenshot">
           <AccordionTrigger className="text-gaming-text hover:text-gaming-accent">
@@ -149,14 +190,13 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
 
         <AccordionItem value="meshes">
           <AccordionTrigger className="text-gaming-text hover:text-gaming-accent">
-            Bulk Mesh Assignment
+            Mesh Selection for {currentPart}
           </AccordionTrigger>
           <AccordionContent>
             <div className="space-y-4">
-              <Textarea
-                value={jsonConfig}
-                onChange={(e) => setJsonConfig(e.target.value)}
-                className="font-mono text-sm h-[300px] bg-gaming-muted border-gaming-accent/20"
+              <MeshSelector
+                selectedMeshes={selectedMeshes}
+                onMeshSelect={handleMeshSelect}
               />
               <Button 
                 onClick={() => handleJsonUpdate(jsonConfig)}
@@ -174,9 +214,18 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
             Current Configuration
           </AccordionTrigger>
           <AccordionContent>
-            <pre className="bg-gaming-muted p-4 rounded-lg overflow-x-auto">
-              <code>{JSON.stringify(config, null, 2)}</code>
-            </pre>
+            <Textarea
+              value={jsonConfig}
+              onChange={(e) => setJsonConfig(e.target.value)}
+              className="font-mono text-sm h-[300px] bg-gaming-muted border-gaming-accent/20"
+            />
+            <Button 
+              onClick={() => handleJsonUpdate(jsonConfig)}
+              className="w-full mt-4 bg-gaming-accent hover:bg-gaming-accent/80"
+            >
+              <Save className="w-4 h-4 mr-2" />
+              Update Configuration
+            </Button>
           </AccordionContent>
         </AccordionItem>
       </Accordion>
