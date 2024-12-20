@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { toast } from '@/hooks/use-toast';
 
 interface PCViewerProps {
@@ -66,8 +67,15 @@ const PCViewer = ({ visibleParts }: PCViewerProps) => {
     directionalLight.shadow.mapSize.height = 2048;
     scene.add(directionalLight);
 
+    // Set up Draco loader
+    const dracoLoader = new DRACOLoader();
+    dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+    dracoLoader.preload();
+
     // Load model
     const loader = new GLTFLoader();
+    loader.setDRACOLoader(dracoLoader);
+    
     console.log('Loading model...');
     
     loader.load(
@@ -150,6 +158,7 @@ const PCViewer = ({ visibleParts }: PCViewerProps) => {
       if (controlsRef.current) {
         controlsRef.current.dispose();
       }
+      dracoLoader.dispose();
     };
   }, []);
 
