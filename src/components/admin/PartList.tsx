@@ -33,9 +33,10 @@ const PartList = ({
     setJsonConfig(JSON.stringify(newConfig, null, 2));
   };
 
-  const handleSaveChanges = (partId: string, pendingMeshes: string[]) => {
+  const handleSaveChanges = (partId: string, pendingMeshes: string[], updatedPart?: any) => {
     const updatedMeshMap = { ...config.meshMap };
     
+    // Update mesh assignments
     Object.keys(updatedMeshMap).forEach(part => {
       if (part !== partId) {
         updatedMeshMap[part] = updatedMeshMap[part].filter(
@@ -43,39 +44,32 @@ const PartList = ({
         );
       }
     });
-
     updatedMeshMap[partId] = pendingMeshes;
-    const newConfig = { ...config, meshMap: updatedMeshMap };
+
+    // Create new config with both mesh and part details updates
+    const newConfig = { 
+      ...config, 
+      meshMap: updatedMeshMap,
+      ...(updatedPart && {
+        partDetails: {
+          ...config.partDetails,
+          [partId]: {
+            name: updatedPart.name,
+            description: updatedPart.description,
+            price: updatedPart.price,
+            isConfigurable: updatedPart.isConfigurable,
+            icon: updatedPart.icon,
+          }
+        }
+      })
+    };
     
     setConfig(newConfig);
     setJsonConfig(JSON.stringify(newConfig, null, 2));
 
     toast({
       title: "Changes Saved",
-      description: `Updated mesh assignments for ${config.partDetails[partId].name}`,
-    });
-  };
-
-  const handlePartUpdate = (partId: string, updatedPart: any) => {
-    const newConfig = {
-      ...config,
-      partDetails: {
-        ...config.partDetails,
-        [partId]: {
-          name: updatedPart.name,
-          description: updatedPart.description,
-          price: updatedPart.price,
-          isConfigurable: updatedPart.isConfigurable,
-          icon: updatedPart.icon,
-        }
-      }
-    };
-    setConfig(newConfig);
-    setJsonConfig(JSON.stringify(newConfig, null, 2));
-
-    toast({
-      title: "Part Updated",
-      description: `Successfully updated ${updatedPart.name}`,
+      description: `Updated ${config.partDetails[partId].name}`,
     });
   };
 
@@ -113,7 +107,7 @@ const PartList = ({
                     icon: config.partDetails[part].icon,
                     meshNames: config.meshMap[part]
                   }}
-                  onUpdate={(updatedPart) => handlePartUpdate(part, updatedPart)}
+                  onUpdate={(updatedPart) => handleSaveChanges(part, config.meshMap[part], updatedPart)}
                   onMeshSelect={(partId, meshName) => handleMeshSelect(partId, meshName)}
                 />
                 <PartManagement

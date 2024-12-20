@@ -1,7 +1,10 @@
+import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Save } from 'lucide-react';
 import MeshSelector from './MeshSelector';
 import { Monitor, PcCase, Keyboard, Mouse, Speaker, Settings } from 'lucide-react';
 
@@ -13,14 +16,6 @@ const AVAILABLE_ICONS = [
   { value: 'speaker', label: 'Speaker', icon: Speaker },
   { value: 'settings', label: 'Settings', icon: Settings },
 ];
-
-interface PartDetail {
-  name: string;
-  description: string;
-  price: number;
-  isConfigurable: boolean;
-  icon?: string;
-}
 
 interface Part {
   id: string;
@@ -40,14 +35,24 @@ interface PartDetailsFormProps {
 }
 
 const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps) => {
+  const [localPart, setLocalPart] = useState(part);
+
+  useEffect(() => {
+    setLocalPart(part);
+  }, [part]);
+
+  const handleSaveChanges = () => {
+    onUpdate(localPart);
+  };
+
   return (
     <div className="space-y-6 animate-part-in">
       <div className="space-y-4">
         <div>
           <Label className="text-sm text-gray-400">Title</Label>
           <Input
-            value={part.name}
-            onChange={(e) => onUpdate({ ...part, name: e.target.value })}
+            value={localPart.name}
+            onChange={(e) => setLocalPart({ ...localPart, name: e.target.value })}
             className="bg-gaming-muted text-gaming-text border-gaming-accent/20"
             placeholder="Display name for the part"
           />
@@ -56,8 +61,8 @@ const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps)
         <div>
           <Label className="text-sm text-gray-400">Part Code</Label>
           <Input
-            value={part.code}
-            onChange={(e) => onUpdate({ ...part, code: e.target.value })}
+            value={localPart.code}
+            onChange={(e) => setLocalPart({ ...localPart, code: e.target.value })}
             className="bg-gaming-muted text-gaming-text border-gaming-accent/20"
             placeholder="e.g., Monitor, PC"
           />
@@ -66,8 +71,8 @@ const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps)
         <div className="flex items-center space-x-2">
           <Switch
             id="configurable"
-            checked={part.isConfigurable}
-            onCheckedChange={(checked) => onUpdate({ ...part, isConfigurable: checked })}
+            checked={localPart.isConfigurable}
+            onCheckedChange={(checked) => setLocalPart({ ...localPart, isConfigurable: checked })}
             className="data-[state=checked]:bg-gaming-accent"
           />
           <Label htmlFor="configurable" className="text-sm text-gray-400">
@@ -75,13 +80,13 @@ const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps)
           </Label>
         </div>
 
-        {part.isConfigurable && (
+        {localPart.isConfigurable && (
           <>
             <div>
               <Label className="text-sm text-gray-400">Icon</Label>
               <Select
-                value={part.icon || 'settings'}
-                onValueChange={(value) => onUpdate({ ...part, icon: value })}
+                value={localPart.icon || 'settings'}
+                onValueChange={(value) => setLocalPart({ ...localPart, icon: value })}
               >
                 <SelectTrigger className="bg-gaming-muted text-gaming-text border-gaming-accent/20">
                   <SelectValue placeholder="Select an icon" />
@@ -102,8 +107,8 @@ const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps)
             <div>
               <Label className="text-sm text-gray-400">Description</Label>
               <Input
-                value={part.description}
-                onChange={(e) => onUpdate({ ...part, description: e.target.value })}
+                value={localPart.description}
+                onChange={(e) => setLocalPart({ ...localPart, description: e.target.value })}
                 className="bg-gaming-muted text-gaming-text border-gaming-accent/20"
                 placeholder="Part description"
               />
@@ -113,8 +118,8 @@ const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps)
               <Label className="text-sm text-gray-400">Price</Label>
               <Input
                 type="number"
-                value={part.price}
-                onChange={(e) => onUpdate({ ...part, price: parseFloat(e.target.value) || 0 })}
+                value={localPart.price}
+                onChange={(e) => setLocalPart({ ...localPart, price: parseFloat(e.target.value) || 0 })}
                 className="bg-gaming-muted text-gaming-text border-gaming-accent/20"
                 placeholder="0.00"
               />
@@ -127,13 +132,21 @@ const PartDetailsForm = ({ part, onUpdate, onMeshSelect }: PartDetailsFormProps)
         <Label className="text-sm text-gray-400 block mb-2">Mesh Selection</Label>
         <p className="text-xs text-gray-500 mb-4">Click on parts in the 3D view to select/deselect them</p>
         <MeshSelector
-          selectedMeshes={part.meshNames}
-          onMeshSelect={(meshName) => onMeshSelect(part.id, meshName)}
+          selectedMeshes={localPart.meshNames}
+          onMeshSelect={(meshName) => onMeshSelect(localPart.id, meshName)}
           pendingSelections={[]}
-          visibleMeshes={part.meshNames}
+          visibleMeshes={localPart.meshNames}
           hideMeshes={false}
         />
       </div>
+
+      <Button 
+        onClick={handleSaveChanges}
+        className="w-full bg-gaming-accent hover:bg-gaming-accent/80"
+      >
+        <Save className="w-4 h-4 mr-2" />
+        Save Changes
+      </Button>
     </div>
   );
 };
