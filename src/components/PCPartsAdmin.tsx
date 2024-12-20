@@ -4,6 +4,13 @@ import { Camera, RotateCcw, Save } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import MeshSelector from './MeshSelector';
 import PCViewer from './PCViewer';
 
@@ -83,7 +90,6 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
         ? prev.filter(name => name !== meshName)
         : [...prev, meshName];
       
-      // Update the config.meshMap for the current part
       const newConfig = {
         ...config,
         meshMap: {
@@ -103,7 +109,6 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
       const parsed = JSON.parse(newJson);
       setConfig(parsed);
       setJsonConfig(newJson);
-      // Update selected meshes based on current part
       setSelectedMeshes(parsed.meshMap[currentPart] || []);
       toast({
         title: "Success",
@@ -119,7 +124,6 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   };
 
   const resetView = () => {
-    // TODO: Implement reset view functionality
     toast({
       title: "Info",
       description: "View reset to default position",
@@ -127,7 +131,6 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
   };
 
   const setCurrentView = () => {
-    // TODO: Implement save current view functionality
     toast({
       title: "Success",
       description: "Current view saved as screenshot location",
@@ -136,20 +139,25 @@ const PCPartsAdmin = ({ availableMeshes }: PCPartsAdminProps) => {
 
   return (
     <div className="space-y-6 p-6 bg-gaming-background text-gaming-text">
-      <div className="flex gap-4 mb-4">
-        {Object.keys(config.meshMap).map((part) => (
-          <Button
-            key={part}
-            onClick={() => {
-              setCurrentPart(part);
-              setSelectedMeshes(config.meshMap[part] || []);
-            }}
-            variant={currentPart === part ? "default" : "outline"}
-            className={currentPart === part ? "bg-gaming-accent" : ""}
-          >
-            {part}
-          </Button>
-        ))}
+      <div className="w-full max-w-xs">
+        <Select
+          value={currentPart}
+          onValueChange={(value) => {
+            setCurrentPart(value);
+            setSelectedMeshes(config.meshMap[value] || []);
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Select a part" />
+          </SelectTrigger>
+          <SelectContent>
+            {Object.keys(config.meshMap).map((part) => (
+              <SelectItem key={part} value={part}>
+                {config.partDetails[part].name} - ${config.partDetails[part].price}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Accordion type="single" collapsible className="w-full">
