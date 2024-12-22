@@ -1,14 +1,5 @@
-import { Check, Monitor, Computer, Keyboard, Mouse, Speaker, Settings } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { Component } from '@/types/component';
-
-const ICON_MAP: Record<string, any> = {
-  'monitor': Monitor,
-  'computer': Computer,
-  'keyboard': Keyboard,
-  'mouse': Mouse,
-  'speaker': Speaker,
-  'settings': Settings,
-};
 
 interface ComponentItemProps {
   component: Component;
@@ -17,10 +8,6 @@ interface ComponentItemProps {
 }
 
 const ComponentItem = ({ component, isSelected, onToggle }: ComponentItemProps) => {
-  // Handle icon selection based on string type only
-  const iconKey = typeof component.icon === 'string' ? component.icon.toLowerCase() : 'settings';
-  const IconComponent = ICON_MAP[iconKey];
-
   return (
     <button
       onClick={() => onToggle(component)}
@@ -31,7 +18,7 @@ const ComponentItem = ({ component, isSelected, onToggle }: ComponentItemProps) 
       }`}
     >
       <div className="flex items-center gap-3">
-        <IconComponent className="w-5 h-5" />
+        <component.icon className="w-5 h-5" />
         <div className="flex-1 text-left">
           <div className="flex justify-between items-center">
             <span className="font-medium">{component.name}</span>
