@@ -37,19 +37,27 @@ const ComponentSidebar = ({
   const captureScene = async () => {
     setIsCapturing(true);
     try {
-      // Wait a bit for any pending renders
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait for any visibility changes to settle
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Try multiple possible selectors for the scene element
-      const sceneElement = 
-        document.querySelector('.w-full.h-full.relative') || 
-        document.querySelector('.w-full.h-full') ||
-        document.querySelector('[ref="mountRef"]');
-
+      const sceneElement = document.querySelector('.w-full.h-full.relative');
+      
       if (!sceneElement) {
-        console.error('Available elements:', document.body.innerHTML);
+        console.error('Scene element not found');
         throw new Error('Scene element not found. Please ensure the 3D viewer is properly mounted.');
       }
+
+      console.log('Capturing scene with selected components:', Array.from(selectedComponents));
+      
+      // Force visible state during capture
+      const hiddenElements = sceneElement.querySelectorAll('[style*="display: none"]');
+      const originalDisplayStates = new Map();
+      
+      hiddenElements.forEach((el: Element) => {
+        originalDisplayStates.set(el, el.getAttribute('style'));
+        (el as HTMLElement).style.display = 'block';
+        (el as HTMLElement).style.visibility = 'visible';
+      });
       
       const canvas = await html2canvas(sceneElement as HTMLElement, {
         useCORS: true,
@@ -57,16 +65,32 @@ const ComponentSidebar = ({
         scale: 2,
         logging: true,
         allowTaint: true,
-        foreignObjectRendering: true
+        foreignObjectRendering: true,
+        onclone: (clonedDoc) => {
+          const clonedScene = clonedDoc.querySelector('.w-full.h-full.relative');
+          if (clonedScene) {
+            // Ensure proper dimensions
+            (clonedScene as HTMLElement).style.width = '100%';
+            (clonedScene as HTMLElement).style.height = '100%';
+          }
+        }
+      });
+      
+      // Restore original visibility states
+      hiddenElements.forEach((el: Element) => {
+        const originalStyle = originalDisplayStates.get(el);
+        if (originalStyle) {
+          el.setAttribute('style', originalStyle);
+        }
       });
       
       const image = canvas.toDataURL('image/png');
       
       const cartData = {
         screenshot: image,
-        components: Array.from(selectedComponents).map(id => 
-          components.find(c => c.id === id)
-        ),
+        components: Array.from(selectedComponents)
+          .map(id => components.find(c => c.id === id))
+          .filter(Boolean),
         totalPrice,
       };
       
