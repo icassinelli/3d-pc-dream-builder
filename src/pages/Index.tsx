@@ -8,7 +8,6 @@ import { MeshVisibilityProvider } from '@/contexts/MeshVisibilityContext';
 import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
-  // Initialize with lowercase component IDs
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(() => 
     new Set(['monitor', 'pc', 'keyboard', 'mouse', 'speakers'])
   );
@@ -40,16 +39,19 @@ const Index = () => {
 
     const newVisibleParts: string[] = [];
     
+    // Always show non-configurable parts
     if (config.meshMap.nonconfigurable) {
       newVisibleParts.push(...config.meshMap.nonconfigurable);
     }
 
+    // Add meshes for selected components
     selectedComponents.forEach(componentId => {
       if (config.meshMap[componentId]) {
         newVisibleParts.push(...config.meshMap[componentId]);
       }
     });
 
+    console.log('Selected components:', Array.from(selectedComponents));
     console.log('Updated visible parts:', newVisibleParts);
     setVisibleParts(newVisibleParts);
   }, [selectedComponents, config]);
