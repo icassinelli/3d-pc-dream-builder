@@ -20,7 +20,7 @@ const Index = () => {
       const savedConfig = localStorage.getItem('pcConfig');
       if (savedConfig) {
         try {
-          const parsedConfig = JSON.parse(savedConfig);
+          const parsedConfig = JSON.parse(savedConfig) as ConfigData;
           console.log('Loaded config:', parsedConfig);
           setConfig(parsedConfig);
           

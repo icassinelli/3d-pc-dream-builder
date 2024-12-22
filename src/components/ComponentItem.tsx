@@ -1,4 +1,4 @@
-import { Check, Monitor, Computer, Keyboard, Mouse, Speaker, Settings } from 'lucide-react';
+import { Monitor, Computer, Keyboard, Mouse, Speaker, Settings } from 'lucide-react';
 import { Component } from '@/types/component';
 
 const ICON_MAP: Record<string, any> = {
@@ -17,7 +17,9 @@ interface ComponentItemProps {
 }
 
 const ComponentItem = ({ component, isSelected, onToggle }: ComponentItemProps) => {
-  const IconComponent = ICON_MAP[component.icon?.toLowerCase() || 'settings'];
+  // Handle icon selection based on string type only
+  const iconKey = typeof component.icon === 'string' ? component.icon.toLowerCase() : 'settings';
+  const IconComponent = ICON_MAP[iconKey];
 
   return (
     <button
