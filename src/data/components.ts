@@ -10,8 +10,8 @@ export const components: Component[] = [
     icon: Monitor,
   },
   {
-    id: 'pc',  // Changed from 'tower' to 'pc'
-    name: 'Gaming Tower',
+    id: 'pc',
+    name: 'Gaming PC',
     price: 999.99,
     description: 'High-performance gaming PC with RTX 4070 and latest gen processor',
     icon: Computer,
