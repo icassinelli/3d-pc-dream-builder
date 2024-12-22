@@ -1,4 +1,4 @@
-import { Monitor, Computer, Keyboard, Mouse, Speaker, Settings } from 'lucide-react';
+import { Check, Monitor, Computer, Keyboard, Mouse, Speaker, Settings } from 'lucide-react';
 import { Component } from '@/types/component';
 
 const ICON_MAP: Record<string, any> = {
