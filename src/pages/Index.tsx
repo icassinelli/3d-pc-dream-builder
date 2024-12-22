@@ -5,19 +5,16 @@ import ComponentSidebar from '@/components/ComponentSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ConfigData } from '@/types/config';
 import { MeshVisibilityProvider } from '@/contexts/MeshVisibilityContext';
-import { components } from '@/data/components';
 import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
-  const [selectedComponents, setSelectedComponents] = useState<Set<string>>(() => 
-    new Set(components.map(comp => comp.id))
-  );
+  const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
   const [visibleParts, setVisibleParts] = useState<string[]>([]);
   const [config, setConfig] = useState<ConfigData | null>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  // Load config from localStorage
+  // Load config from localStorage and initialize selected components
   useEffect(() => {
     const savedConfig = localStorage.getItem('pcConfig');
     if (savedConfig) {
@@ -25,6 +22,13 @@ const Index = () => {
         const parsedConfig = JSON.parse(savedConfig);
         console.log('Loaded config:', parsedConfig);
         setConfig(parsedConfig);
+        
+        // Initialize selected components based on configurable parts from config
+        const configurableParts = Object.entries(parsedConfig.partDetails)
+          .filter(([_, details]) => details.isConfigurable)
+          .map(([partId]) => partId.toLowerCase());
+        
+        setSelectedComponents(new Set(configurableParts));
       } catch (error) {
         console.error('Error parsing config:', error);
         toast({
