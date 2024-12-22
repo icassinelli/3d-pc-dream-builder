@@ -13,68 +13,50 @@ const Index = () => {
     new Set(components.map(comp => comp.id))
   );
   const [visibleParts, setVisibleParts] = useState<string[]>([]);
+  const [config, setConfig] = useState<ConfigData | null>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [config, setConfig] = useState<ConfigData>({
-    meshMap: {},
-    partDetails: {}
-  });
 
-  // Load initial config and handle storage events
+  // Load config from localStorage
   useEffect(() => {
-    const loadConfig = () => {
-      const savedConfig = localStorage.getItem('pcConfig');
-      if (savedConfig) {
-        try {
-          const parsedConfig = JSON.parse(savedConfig);
-          console.log('Loading config:', parsedConfig);
-          setConfig(parsedConfig);
-        } catch (error) {
-          console.error('Error parsing config:', error);
-          toast({
-            title: "Error",
-            description: "Failed to load configuration",
-            variant: "destructive",
-          });
-        }
-      }
-    };
-
-    loadConfig();
-
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'pcConfig' && event.newValue !== null) {
-        loadConfig();
+    const savedConfig = localStorage.getItem('pcConfig');
+    if (savedConfig) {
+      try {
+        const parsedConfig = JSON.parse(savedConfig);
+        console.log('Loaded config:', parsedConfig);
+        setConfig(parsedConfig);
+      } catch (error) {
+        console.error('Error parsing config:', error);
         toast({
-          title: "Configuration Updated",
-          description: "The configuration has been updated",
+          title: "Error",
+          description: "Failed to load configuration",
+          variant: "destructive",
         });
       }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
+    }
   }, []);
 
-  // Update visible parts when selected components or config changes
+  // Update visible meshes when components or config changes
   useEffect(() => {
-    console.log('Updating visible parts. Selected components:', Array.from(selectedComponents));
-    console.log('Current config:', config);
-    
-    const newVisibleParts = Array.from(selectedComponents).reduce<string[]>((meshes, componentId) => {
-      // Convert component ID to match the config keys (capitalize first letter)
-      const configKey = componentId.charAt(0).toUpperCase() + componentId.slice(1);
-      const componentMeshes = config.meshMap[configKey] || [];
-      console.log(`Component ${componentId} (${configKey}) meshes:`, componentMeshes);
-      return [...meshes, ...componentMeshes];
-    }, []);
+    if (!config) return;
 
-    // Always include non-configurable parts
+    const newVisibleParts: string[] = [];
+    
+    // Always show non-configurable parts
     if (config.meshMap.NonConfigurable) {
       newVisibleParts.push(...config.meshMap.NonConfigurable);
     }
-    
-    console.log('New visible parts:', newVisibleParts);
+
+    // Add meshes for selected components
+    selectedComponents.forEach(componentId => {
+      // Convert component ID to match config keys (capitalize first letter)
+      const configKey = componentId.charAt(0).toUpperCase() + componentId.slice(1);
+      if (config.meshMap[configKey]) {
+        newVisibleParts.push(...config.meshMap[configKey]);
+      }
+    });
+
+    console.log('Updated visible parts:', newVisibleParts);
     setVisibleParts(newVisibleParts);
   }, [selectedComponents, config]);
 

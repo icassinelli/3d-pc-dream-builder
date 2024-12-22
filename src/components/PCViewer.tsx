@@ -21,6 +21,21 @@ const PCViewer = ({ visibleParts, onMeshesLoaded }: PCViewerProps) => {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!sceneRef.current) return;
+
+    console.log('Updating mesh visibility in scene');
+    sceneRef.current.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        const shouldBeVisible = visibleParts.includes(object.name);
+        if (object.visible !== shouldBeVisible) {
+          console.log(`Setting visibility of ${object.name} to ${shouldBeVisible}`);
+          object.visible = shouldBeVisible;
+        }
+      }
+    });
+  }, [visibleParts]);
+
+  useEffect(() => {
     if (!mountRef.current) return;
 
     if (!sceneRef.current) {
