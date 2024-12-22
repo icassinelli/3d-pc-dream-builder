@@ -19,14 +19,14 @@ const Index = () => {
     const savedConfig = localStorage.getItem('pcConfig');
     if (savedConfig) {
       try {
-        const parsedConfig = JSON.parse(savedConfig);
+        const parsedConfig = JSON.parse(savedConfig) as ConfigData;
         console.log('Loaded config:', parsedConfig);
         setConfig(parsedConfig);
         
         // Initialize selected components based on configurable parts from config
         const configurableParts = Object.entries(parsedConfig.partDetails)
           .filter(([_, details]) => details.isConfigurable)
-          .map(([partId]) => partId.toLowerCase());
+          .map(([partId]) => partId);
         
         setSelectedComponents(new Set(configurableParts));
       } catch (error) {
@@ -54,7 +54,7 @@ const Index = () => {
     // Add meshes for selected components
     selectedComponents.forEach(componentId => {
       // Convert component ID to match config keys (capitalize first letter)
-      const configKey = componentId.charAt(0).toUpperCase() + componentId.slice(1);
+      const configKey = componentId;
       if (config.meshMap[configKey]) {
         newVisibleParts.push(...config.meshMap[configKey]);
       }
@@ -63,19 +63,6 @@ const Index = () => {
     console.log('Updated visible parts:', newVisibleParts);
     setVisibleParts(newVisibleParts);
   }, [selectedComponents, config]);
-
-  const handleComponentToggle = (componentId: string) => {
-    console.log('Toggling component:', componentId);
-    setSelectedComponents(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(componentId)) {
-        newSet.delete(componentId);
-      } else {
-        newSet.add(componentId);
-      }
-      return newSet;
-    });
-  };
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
