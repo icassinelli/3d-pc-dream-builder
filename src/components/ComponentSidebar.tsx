@@ -3,32 +3,38 @@ import { useNavigate } from 'react-router-dom';
 import { ShoppingCart } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import html2canvas from 'html2canvas';
-import { components } from '@/data/components';
 import ComponentItem from './ComponentItem';
-import type { Component } from '@/types/component';
+import { ConfigData } from '@/types/config';
 
 interface ComponentSidebarProps {
   onComponentToggle: (componentId: string) => void;
   selectedComponents: Set<string>;
   setSelectedComponents: (components: Set<string>) => void;
+  config: ConfigData;
 }
 
 const ComponentSidebar = ({
   onComponentToggle,
   selectedComponents,
   setSelectedComponents,
+  config,
 }: ComponentSidebarProps) => {
   const navigate = useNavigate();
   const [isCapturing, setIsCapturing] = useState(false);
   const { toast } = useToast();
 
-  const toggleComponent = (component: Component) => {
-    console.log('Toggling component:', component.id);
-    onComponentToggle(component.id);
-  };
+  const configurableComponents = Object.entries(config.partDetails)
+    .filter(([_, details]) => details.isConfigurable)
+    .map(([key, details]) => ({
+      id: key.toLowerCase(),
+      name: details.name,
+      price: details.price,
+      description: details.description,
+      icon: details.icon || 'settings'
+    }));
 
   const totalPrice = Array.from(selectedComponents).reduce((sum, id) => {
-    const component = components.find(c => c.id === id);
+    const component = configurableComponents.find(c => c.id === id);
     return sum + (component?.price || 0);
   }, 0);
 
@@ -37,10 +43,8 @@ const ComponentSidebar = ({
   const captureScene = async () => {
     setIsCapturing(true);
     try {
-      // Wait a bit for any pending renders
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Try multiple possible selectors for the scene element
       const sceneElement = 
         document.querySelector('.w-full.h-full.relative') || 
         document.querySelector('.w-full.h-full') ||
@@ -65,7 +69,7 @@ const ComponentSidebar = ({
       const cartData = {
         screenshot: image,
         components: Array.from(selectedComponents).map(id => 
-          components.find(c => c.id === id)
+          configurableComponents.find(c => c.id === id)
         ),
         totalPrice,
       };
@@ -98,12 +102,12 @@ const ComponentSidebar = ({
         </div>
         
         <div className="space-y-2">
-          {components.map((component) => (
+          {configurableComponents.map((component) => (
             <ComponentItem
               key={component.id}
               component={component}
               isSelected={selectedComponents.has(component.id)}
-              onToggle={() => toggleComponent(component)}
+              onToggle={() => onComponentToggle(component.id)}
             />
           ))}
         </div>
