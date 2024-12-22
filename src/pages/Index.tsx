@@ -5,30 +5,26 @@ import ComponentSidebar from '@/components/ComponentSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ConfigData } from '@/types/config';
 import { MeshVisibilityProvider } from '@/contexts/MeshVisibilityContext';
+import { components } from '@/data/components';
 import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
-  const [selectedComponents, setSelectedComponents] = useState<Set<string>>(new Set());
+  const [selectedComponents, setSelectedComponents] = useState<Set<string>>(() => 
+    new Set(components.map(comp => comp.id))
+  );
   const [visibleParts, setVisibleParts] = useState<string[]>([]);
   const [config, setConfig] = useState<ConfigData | null>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  // Load config from localStorage and initialize selected components
+  // Load config from localStorage
   useEffect(() => {
     const savedConfig = localStorage.getItem('pcConfig');
     if (savedConfig) {
       try {
-        const parsedConfig = JSON.parse(savedConfig) as ConfigData;
+        const parsedConfig = JSON.parse(savedConfig);
         console.log('Loaded config:', parsedConfig);
         setConfig(parsedConfig);
-        
-        // Initialize selected components based on configurable parts from config
-        const configurableParts = Object.entries(parsedConfig.partDetails)
-          .filter(([_, details]) => details.isConfigurable)
-          .map(([partId]) => partId);
-        
-        setSelectedComponents(new Set(configurableParts));
       } catch (error) {
         console.error('Error parsing config:', error);
         toast({
@@ -54,7 +50,7 @@ const Index = () => {
     // Add meshes for selected components
     selectedComponents.forEach(componentId => {
       // Convert component ID to match config keys (capitalize first letter)
-      const configKey = componentId;
+      const configKey = componentId.charAt(0).toUpperCase() + componentId.slice(1);
       if (config.meshMap[configKey]) {
         newVisibleParts.push(...config.meshMap[configKey]);
       }
