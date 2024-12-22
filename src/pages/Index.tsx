@@ -5,12 +5,12 @@ import ComponentSidebar from '@/components/ComponentSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ConfigData } from '@/types/config';
 import { MeshVisibilityProvider } from '@/contexts/MeshVisibilityContext';
-import { components } from '@/data/components';
 import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
+  // Initialize with lowercase component IDs
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(() => 
-    new Set(components.map(comp => comp.id))
+    new Set(['monitor', 'pc', 'keyboard', 'mouse', 'speakers'])
   );
   const [visibleParts, setVisibleParts] = useState<string[]>([]);
   const [config, setConfig] = useState<ConfigData | null>(null);
