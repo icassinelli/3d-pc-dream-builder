@@ -5,22 +5,24 @@ import ComponentSidebar from '@/components/ComponentSidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { ConfigData } from '@/types/config';
 import { MeshVisibilityProvider } from '@/contexts/MeshVisibilityContext';
+import { components } from '@/data/components';
 import { toast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [selectedComponents, setSelectedComponents] = useState<Set<string>>(() => 
-    new Set(['monitor', 'pc', 'keyboard', 'mouse', 'speakers'])
+    new Set(components.map(comp => comp.id))
   );
   const [visibleParts, setVisibleParts] = useState<string[]>([]);
   const [config, setConfig] = useState<ConfigData | null>(null);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
+  // Load config from localStorage
   useEffect(() => {
     const savedConfig = localStorage.getItem('pcConfig');
     if (savedConfig) {
       try {
-        const parsedConfig = JSON.parse(savedConfig) as ConfigData;
+        const parsedConfig = JSON.parse(savedConfig);
         console.log('Loaded config:', parsedConfig);
         setConfig(parsedConfig);
       } catch (error) {
@@ -34,24 +36,26 @@ const Index = () => {
     }
   }, []);
 
+  // Update visible meshes when components or config changes
   useEffect(() => {
     if (!config) return;
 
     const newVisibleParts: string[] = [];
     
     // Always show non-configurable parts
-    if (config.meshMap.nonconfigurable) {
-      newVisibleParts.push(...config.meshMap.nonconfigurable);
+    if (config.meshMap.NonConfigurable) {
+      newVisibleParts.push(...config.meshMap.NonConfigurable);
     }
 
     // Add meshes for selected components
     selectedComponents.forEach(componentId => {
-      if (config.meshMap[componentId]) {
-        newVisibleParts.push(...config.meshMap[componentId]);
+      // Convert component ID to match config keys (capitalize first letter)
+      const configKey = componentId.charAt(0).toUpperCase() + componentId.slice(1);
+      if (config.meshMap[configKey]) {
+        newVisibleParts.push(...config.meshMap[configKey]);
       }
     });
 
-    console.log('Selected components:', Array.from(selectedComponents));
     console.log('Updated visible parts:', newVisibleParts);
     setVisibleParts(newVisibleParts);
   }, [selectedComponents, config]);
