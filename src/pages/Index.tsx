@@ -64,6 +64,19 @@ const Index = () => {
     setVisibleParts(newVisibleParts);
   }, [selectedComponents, config]);
 
+  const handleComponentToggle = (componentId: string) => {
+    console.log('Toggling component:', componentId);
+    setSelectedComponents(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(componentId)) {
+        newSet.delete(componentId);
+      } else {
+        newSet.add(componentId);
+      }
+      return newSet;
+    });
+  };
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.shiftKey && event.key.toLowerCase() === 'a') {
