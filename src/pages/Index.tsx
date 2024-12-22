@@ -17,12 +17,11 @@ const Index = () => {
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
-  // Load config from localStorage
   useEffect(() => {
     const savedConfig = localStorage.getItem('pcConfig');
     if (savedConfig) {
       try {
-        const parsedConfig = JSON.parse(savedConfig);
+        const parsedConfig = JSON.parse(savedConfig) as ConfigData;
         console.log('Loaded config:', parsedConfig);
         setConfig(parsedConfig);
       } catch (error) {
@@ -36,23 +35,18 @@ const Index = () => {
     }
   }, []);
 
-  // Update visible meshes when components or config changes
   useEffect(() => {
     if (!config) return;
 
     const newVisibleParts: string[] = [];
     
-    // Always show non-configurable parts
-    if (config.meshMap.NonConfigurable) {
-      newVisibleParts.push(...config.meshMap.NonConfigurable);
+    if (config.meshMap.nonconfigurable) {
+      newVisibleParts.push(...config.meshMap.nonconfigurable);
     }
 
-    // Add meshes for selected components
     selectedComponents.forEach(componentId => {
-      // Convert component ID to match config keys (capitalize first letter)
-      const configKey = componentId.charAt(0).toUpperCase() + componentId.slice(1);
-      if (config.meshMap[configKey]) {
-        newVisibleParts.push(...config.meshMap[configKey]);
+      if (config.meshMap[componentId]) {
+        newVisibleParts.push(...config.meshMap[componentId]);
       }
     });
 
